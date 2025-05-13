@@ -17,13 +17,13 @@ export default function Home() {
       </video>
 
       {/* Button with Icon */}
-      <div className="pt-100">
+      <div className="pt-100 pl-150">
         <Link href="/home" passHref>
           <button
-            className="flex items-center gap-2 px-6 py-3 bg-white/80 text-black rounded-full shadow-lg backdrop-blur-md hover:bg-white hover:scale-105 transition-all duration-300 ease-in-out"
+            className="flex items-center gap-2 px-6 py-3 bg-green-300 text-black rounded-full shadow-lg backdrop-blur-md hover:bg-green-200 hover:scale-105 transition-all duration-300 ease-in-out"
           >
-            <FaHome className="text-blue-600 w-5 h-5" />
-            <span className="font-semibold">Go Home</span>
+            <FaHome className="text-purple-500 w-9 h-9" />
+            <span className="font-semibold text-2xl">Go Home</span>
           </button>
         </Link>
       </div>
