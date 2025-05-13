@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function navbar () {
   const navLinks = [
-    { name: 'Home', path: '/' },
+    { name: 'Home', path: '/home' },
     { name: 'About', path: '/about' },
     { name: 'Achievements', path: '/achievements' },
     { name: 'Courses', path: '/courses' },
