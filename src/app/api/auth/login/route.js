@@ -1,22 +1,21 @@
 import { NextResponse } from 'next/server';
-import { Registered_Students } from '../../../../models/students.js';
-import connectDB from '../../../../lib/connection.js';
+import Students from '@/models/students.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { connectDB } from '@/lib/DBconnection.js';
 
-export async function POST(req) {
+export async function POST(request) {
   try {
     await connectDB();
-
-    const { emailAddress, password } = await req.json();
+    const { emailAddress, password } = await request.json();
 
     // Validate required fields
     if (!emailAddress || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    // Find student
-    const student = await Registered_Students.findOne({
+    // Find student by email
+    const student = await Students.findOne({
       emailAddress: emailAddress.toLowerCase(),
     });
 
@@ -31,6 +30,11 @@ export async function POST(req) {
     }
 
     // Generate JWT token
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not defined');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
     const token = jwt.sign(
       { id: student._id, email: student.emailAddress },
       process.env.JWT_SECRET,
@@ -51,7 +55,7 @@ export async function POST(req) {
       message: 'Login successful',
       student: studentResponse,
       token,
-    });
+    }, { status: 200 });
 
   } catch (error) {
     console.error('Login error:', error);

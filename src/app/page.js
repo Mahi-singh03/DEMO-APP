@@ -17,7 +17,7 @@ export default function Home() {
       </video>
 
       {/* Button with Icon */}
-      <div className="pt-100 pl-150">
+      <div className="fixed inset-0 flex items-center justify-center pt-70">
         <Link href="/home" passHref>
           <button
             className="flex items-center gap-2 px-6 py-3 bg-green-300 text-black rounded-full shadow-lg backdrop-blur-md hover:bg-green-200 hover:scale-105 transition-all duration-300 ease-in-out"
