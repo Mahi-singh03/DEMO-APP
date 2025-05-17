@@ -242,7 +242,7 @@ const StudentRegistrationForm = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Father's Name *</label>
+              <label className="block text-sm font-medium text-gray-700">Father&apos;s Name *</label>
               <input
                 type="text"
                 name="fatherName"
@@ -257,7 +257,7 @@ const StudentRegistrationForm = () => {
               {errors.fatherName && <p className="mt-1 text-sm text-red-600">{errors.fatherName}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Mother's Name *</label>
+              <label className="block text-sm font-medium text-gray-700">Mother&apos;s Name *</label>
               <input
                 type="text"
                 name="motherName"

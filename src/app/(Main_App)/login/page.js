@@ -256,7 +256,7 @@ const StudentLoginForm = () => {
 
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Don't have an account?{' '}
+          You&apos;re have an account?{' '}
             <a href="/register" className="text-blue-600 hover:text-blue-800">
               Register here
             </a>
