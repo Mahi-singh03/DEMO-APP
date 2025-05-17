@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import Students from '@/models/students.js';
+import Students from '../../../../models/students';
 import { v2 as cloudinary } from 'cloudinary';
-import { connectDB } from '@/lib/DBconnection.js';
+import connectDB from '../../../../lib/DBconnection';
 
 export async function POST(request) {
   try {

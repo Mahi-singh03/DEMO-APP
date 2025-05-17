@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import StudentS from '@/models/DBconnection.js';
-import { connectToDatabase } from '@/lib/db';
+import StudentS from '../../../../models/students';
+import connectDB from '../../../../lib/DBconnection';
 
 export async function GET(request, { params }) {
   try {
-    await connectToDatabase();
+    await connectDB();
     const { rollNo } = params;
 
     if (!rollNo) {
