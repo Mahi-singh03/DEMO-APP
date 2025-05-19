@@ -17,7 +17,7 @@ export async function POST(request) {
     // Find student by email
     const student = await Students.findOne({
       emailAddress: emailAddress.toLowerCase(),
-    });
+    }).select('+password');
 
     if (!student) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });

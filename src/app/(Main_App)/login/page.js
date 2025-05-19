@@ -18,20 +18,26 @@ const StudentLoginForm = () => {
     if (token) {
       fetch('/api/auth/verify', {
         headers: { Authorization: `Bearer ${token}` },
-      }).then((res) => {
-        if (res.ok) {
-          router.replace('/profile');
-        } else {
+      })
+        .then((res) => {
+          if (res.ok) {
+            router.replace('/profile');
+          } else {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+          }
+        })
+        .catch(() => {
           localStorage.removeItem('user');
           localStorage.removeItem('token');
-        }
-      });
+        });
     }
   }, [router]);
 
   const handleBlur = (e) => {
     const { name } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
+    setErrors((prev) => ({ ...prev, [name]: validateField(name, formData[name]) }));
   };
 
   const handleChange = (e) => {
@@ -56,7 +62,7 @@ const StudentLoginForm = () => {
           ? ''
           : 'Password must be at least 6 characters';
       default:
-        return value ? '' : 'This field is required';
+        return '';
     }
   };
 
@@ -79,6 +85,7 @@ const StudentLoginForm = () => {
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrors({});
 
     if (!validateForm()) {
       setLoading(false);
@@ -90,38 +97,38 @@ const StudentLoginForm = () => {
     }
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = ~ fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          emailAddress: formData.emailAddress.toLowerCase(), // Ensure email is lowercase
+          password: formData.password,
+        }),
       });
 
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch (jsonError) {
-        throw new Error('Invalid server response. Please try again.');
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        if (errorData.error.includes('Invalid credentials')) {
+        if (response.status === 401) {
           setErrors({ general: 'Invalid email or password' });
+        } else if (response.status === 400) {
+          setErrors({ general: 'Email and password are required' });
         } else {
-          throw new Error(errorData.error || 'Login failed');
+          setErrors({ general: data.error || 'Login failed' });
         }
         return;
       }
 
-      const data = errorData;
+      // Store user and token in localStorage
       localStorage.setItem('user', JSON.stringify(data.student));
       localStorage.setItem('token', data.token);
       router.push('/profile');
     } catch (error) {
       console.error('Login error:', error);
       setErrors({
-        general: error.message || 'An error occurred. Please try again.',
+        general: 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setLoading(false);
@@ -159,8 +166,11 @@ const StudentLoginForm = () => {
                 <p className="text-sm text-gray-600 mb-4">Please enter your email and password.</p>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Email *</label>
+                  <label htmlFor="emailAddress" className="block text-sm font-medium text-gray-700">
+                    Email *
+                  </label>
                   <input
+                    id="emailAddress"
                     type="email"
                     name="emailAddress"
                     value={formData.emailAddress}
@@ -178,8 +188,11 @@ const StudentLoginForm = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Password *</label>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    Password *
+                  </label>
                   <input
+                    id="password"
                     type="password"
                     name="password"
                     value={formData.password}
@@ -256,7 +269,7 @@ const StudentLoginForm = () => {
 
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-          You&apos;re have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a href="/register" className="text-blue-600 hover:text-blue-800">
               Register here
             </a>
