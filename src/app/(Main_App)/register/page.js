@@ -153,37 +153,40 @@ const StudentRegistrationForm = () => {
         body: JSON.stringify(formData),
       });
 
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch (jsonError) {
-        throw new Error('Invalid server response. Please try again.');
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        if (errorData.error.includes('already registered')) {
-          const field = errorData.error
-            .match(/Email|Aadhar number|Phone number/)?.[0]
-            ?.toLowerCase()
-            .replace(' ', '');
-          setErrors({ [field]: errorData.error });
-        } else if (errorData.error.includes('. ')) {
-          const fieldErrors = errorData.error.split('. ').reduce((acc, msg) => {
-            const fieldMatch = msg.match(/^(.*?)\s/);
-            if (fieldMatch) {
-              const field = fieldMatch[1].toLowerCase();
-              acc[field] = msg;
-            }
-            return acc;
-          }, {});
-          setErrors(fieldErrors);
+        // Handle specific error cases
+        if (data.error) {
+          // Check if it's a field-specific error
+          if (data.error.includes('already registered')) {
+            const field = data.error
+              .match(/Email|Aadhar number|Phone number/)?.[0]
+              ?.toLowerCase()
+              .replace(' ', '');
+            setErrors({ [field]: data.error });
+          } else if (data.error.includes('. ')) {
+            // Handle multiple validation errors
+            const fieldErrors = data.error.split('. ').reduce((acc, msg) => {
+              const fieldMatch = msg.match(/^(.*?)\s/);
+              if (fieldMatch) {
+                const field = fieldMatch[1].toLowerCase();
+                acc[field] = msg;
+              }
+              return acc;
+            }, {});
+            setErrors(fieldErrors);
+          } else {
+            // Handle general error
+            setErrors({ general: data.error });
+          }
         } else {
-          throw new Error(errorData.error || 'Registration failed');
+          setErrors({ general: 'Registration failed. Please try again.' });
         }
         return;
       }
 
-      const data = errorData;
+      // Success case
       localStorage.setItem('user', JSON.stringify(data.student));
       localStorage.setItem('token', data.token);
       router.push('/profile');

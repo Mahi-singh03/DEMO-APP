@@ -97,13 +97,13 @@ const StudentLoginForm = () => {
     }
 
     try {
-      const response = ~ fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          emailAddress: formData.emailAddress.toLowerCase(), // Ensure email is lowercase
+          emailAddress: formData.emailAddress.toLowerCase(),
           password: formData.password,
         }),
       });
@@ -111,24 +111,35 @@ const StudentLoginForm = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          setErrors({ general: 'Invalid email or password' });
-        } else if (response.status === 400) {
-          setErrors({ general: 'Email and password are required' });
+        if (data.error) {
+          if (response.status === 401) {
+            if (data.error.includes('not registered')) {
+              setErrors({ emailAddress: data.error });
+            } else if (data.error.includes('Invalid password')) {
+              setErrors({ password: data.error });
+            } else {
+              setErrors({ general: data.error });
+            }
+          } else if (response.status === 400) {
+            setErrors({ general: data.error });
+          } else if (response.status === 500) {
+            setErrors({ general: 'Server error. Please try again later.' });
+          } else {
+            setErrors({ general: data.error || 'Login failed' });
+          }
         } else {
-          setErrors({ general: data.error || 'Login failed' });
+          setErrors({ general: 'An unexpected error occurred' });
         }
         return;
       }
 
-      // Store user and token in localStorage
       localStorage.setItem('user', JSON.stringify(data.student));
       localStorage.setItem('token', data.token);
       router.push('/profile');
     } catch (error) {
       console.error('Login error:', error);
       setErrors({
-        general: 'An unexpected error occurred. Please try again.',
+        general: 'Network error. Please check your connection and try again.',
       });
     } finally {
       setLoading(false);
