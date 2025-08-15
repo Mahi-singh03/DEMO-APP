@@ -16,15 +16,9 @@ export const config = {
 };
 
 // Configure Cloudinary
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const cloudName = process.env.CLOUDINARY_NAME ;
 const apiKey = process.env.CLOUDINARY_API_KEY;
 const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-console.log('Cloudinary config:', {
-  cloud_name: cloudName,
-  api_key: apiKey,
-  api_secret: apiSecret ? '***' : undefined,
-});
 
 if (!cloudName || !apiKey || !apiSecret) {
   throw new Error('Cloudinary environment variables are missing.');
