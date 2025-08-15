@@ -18,13 +18,12 @@ export async function GET() {
     }
 
     const result = await cloudinary.search
-      .expression('folder:gallery/*') // Adjust if your folder name is different
+      .expression('folder:gallery/*') 
       .sort_by('public_id', 'desc')
-      .with_field('context') // Ensure context metadata (alt, order, etc.) is included
+      .with_field('context') 
       .max_results(100)
       .execute();
 
-    // Validate the response
     if (!result || !result.resources) {
       throw new Error('Invalid response from Cloudinary');
     }
