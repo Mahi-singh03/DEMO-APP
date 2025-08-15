@@ -1,6 +1,6 @@
 // app/api/addbook/route.js
 import  connectDB  from '@/lib/DBconnection';
-import Book from '@/models/bookss';
+import Book from '@/models/books';
 import { File, Storage } from 'megajs';
 import multer from 'multer';
 import { Readable } from 'stream';
