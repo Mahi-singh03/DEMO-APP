@@ -21,10 +21,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Gender is required'],
     enum: {
-      values: ['male', 'female', 'other'],
-      message: 'Gender must be either male, female, or other',
+      values: ['Male', 'Female', 'Other'],
+      message: 'Gender must be either Male, Fmale, or Other',
     },
-    lowercase: true,
     trim: true,
   },
   fatherName: {
@@ -84,12 +83,12 @@ const userSchema = new mongoose.Schema({
   selectedCourse: {
     type: String,
     required: [true, 'Course selection is required'],
-    enum: ['HTML, CSS, JS', 'React', 'MERN FullStack', 'Autocad', 'CorelDRAW', 'Tally', 'Premier Pro', 'WordPress', 'Computer Course', 'MS Office', 'PTE'],
+    enum: ['HTML, CSS, JS','ChatGPT and AI tools','Industrial Training', 'React', 'MERN FullStack', 'CorelDRAW', 'Tally', 'Premier Pro', 'WordPress', 'Computer Course', 'MS Office', 'PTE', "AutoCAD"],
   },
   courseDuration: {
     type: String,
     required: [true, 'Course duration is required'],
-    enum: ['3 months', '6 months', '1 year'],
+    enum: ['3 Months', '6 Months', '1 Year'],
   },
   certificationTitle: {
     type: String,
@@ -178,6 +177,17 @@ const userSchema = new mongoose.Schema({
     enum: ['A', 'B', 'C', 'D', 'F', 'Pending'],
     default: 'Pending',
   },
+  session: {
+    type: String,
+    required: [false, 'Session is required'],
+    trim: true,
+  },
+  percentage: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100,
+  },
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },
@@ -190,48 +200,170 @@ userSchema.pre('save', async function (next) {
     // Set certification title
     if (this.selectedCourse === 'Computer Course') {
       switch (this.courseDuration) {
-        case '3 months':
+        case '3 Months':
           this.certificationTitle = 'CERTIFICATION IN COMPUTER APPLICATION';
           break;
-        case '6 months':
+        case '6 Months':
           this.certificationTitle = 'DIPLOMA IN COMPUTER APPLICATION';
           break;
-        case '1 year':
+        case '1 Year':
           this.certificationTitle = 'ADVANCE DIPLOMA IN COMPUTER APPLICATION';
           break;
         default:
           this.certificationTitle = this.selectedCourse;
       }
-    } else if (this.selectedCourse === 'Tally') {
+    } 
+    else if (this.selectedCourse === 'HTML, CSS, JS') {
       switch (this.courseDuration) {
-        case '3 months':
-          this.certificationTitle = 'CERTIFICATION IN COMPUTER ACCOUNTANCY';
+        case '3 Months':
+          this.certificationTitle = 'CERTIFICATION IN WEB DEVELOPMENT FUNDAMENTALS';
           break;
-        case '6 months':
-          this.certificationTitle = 'DIPLOMA IN COMPUTER ACCOUNTANCY';
+        case '6 Months':
+          this.certificationTitle = 'DIPLOMA IN FRONT-END DEVELOPMENT';
+          break;
+        case '1 Year':
+          this.certificationTitle = 'ADVANCE DIPLOMA IN FRONT-END DEVELOPMENT';
+        break;
+        default:
+          this.certificationTitle = this.selectedCourse;
+      }
+    }
+    else if (this.selectedCourse === 'ChatGPT and AI tools') {
+      switch (this.courseDuration) {
+        case '3 Months':
+          this.certificationTitle = 'CERTIFICATION IN AI TOOLS';
+          break;
+        case '6 Months':
+          this.certificationTitle = 'DIPLOMA IN GENERATIVE AI APPLICATIONS';
+          break;
+        case '1 Year':
+          this.certificationTitle = 'ADVANCE DIPLOMA IN GENERATIVE AI APPLICATIONS';
+        break;
+        default:
+          this.certificationTitle = this.selectedCourse;
+      }
+    }
+    else if (this.selectedCourse === 'Industrial Training') {
+      this.certificationTitle = 'INDUSTRIAL TRAINING CERTIFICATION';
+    }
+    else if (this.selectedCourse === 'React') {
+      switch (this.courseDuration) {
+        case '3 Months':
+          this.certificationTitle = 'CERTIFICATION IN REACT JS';
+          break;
+        case '6 Months':
+          this.certificationTitle = 'ADVANCED CERTIFICATION IN REACT JS';
           break;
         default:
           this.certificationTitle = this.selectedCourse;
       }
-    } else {
+    }
+    else if (this.selectedCourse === 'MERN FullStack') {
+      switch (this.courseDuration) {
+        case '6 Months':
+          this.certificationTitle = 'CERTIFICATION IN MERN STACK DEVELOPMENT';
+          break;
+        case '1 Year':
+          this.certificationTitle = 'DIPLOMA IN FULL STACK DEVELOPMENT';
+          break;
+        default:
+          this.certificationTitle = this.selectedCourse;
+      }
+    }
+    else if (this.selectedCourse === 'CorelDRAW') {
+      switch (this.courseDuration) {
+        case '3 Months':
+          this.certificationTitle = 'CERTIFICATION IN GRAPHIC DESIGN';
+          break;
+        case '6 Months':
+          this.certificationTitle = 'DIPLOMA IN GRAPHIC DESIGN';
+          break;
+        default:
+          this.certificationTitle = this.selectedCourse;
+      }
+    }
+    else if (this.selectedCourse === 'Tally') {
+      switch (this.courseDuration) {
+        case '3 Months':
+          this.certificationTitle = 'CERTIFICATION IN TALLY';
+          break;
+        case '6 Months':
+          this.certificationTitle = 'DIPLOMA IN ACCOUNTING SOFTWARE';
+          break;
+        default:
+          this.certificationTitle = this.selectedCourse;
+      }
+    }
+    else if (this.selectedCourse === 'Premier Pro') {
+      switch (this.courseDuration) {
+        case '3 Months':
+          this.certificationTitle = 'CERTIFICATION IN VIDEO EDITING';
+          break;
+        case '6 Months':
+          this.certificationTitle = 'DIPLOMA IN VIDEO PRODUCTION';
+          break;
+        default:
+          this.certificationTitle = this.selectedCourse;
+      }
+    }
+    else if (this.selectedCourse === 'WordPress') {
+      switch (this.courseDuration) {
+        case '3 Months':
+          this.certificationTitle = 'CERTIFICATION IN WORDPRESS';
+          break;
+        case '6 Months':
+          this.certificationTitle = 'DIPLOMA IN CMS DEVELOPMENT';
+          break;
+        default:
+          this.certificationTitle = this.selectedCourse;
+      }
+    }
+    else if (this.selectedCourse === 'MS Office') {
+      switch (this.courseDuration) {
+        case '3 Months':
+          this.certificationTitle = 'CERTIFICATION IN OFFICE PRODUCTIVITY';
+          break;
+        case '6 Months':
+          this.certificationTitle = 'DIPLOMA IN OFFICE AUTOMATION';
+          break;
+        default:
+          this.certificationTitle = this.selectedCourse;
+      }
+    }
+    else if (this.selectedCourse === 'PTE') {
+      this.certificationTitle = 'PTE TRAINING CERTIFICATION';
+    }
+    else if (this.selectedCourse === 'AutoCAD') {
+      switch (this.courseDuration) {
+        case '3 Months':
+          this.certificationTitle = 'CERTIFICATION IN AUTOCAD';
+          break;
+        case '6 Months':
+          this.certificationTitle = 'DIPLOMA IN COMPUTER-AIDED DESIGN';
+          break;
+        default:
+          this.certificationTitle = this.selectedCourse;
+      }
+    }
+    else {
       this.certificationTitle = this.selectedCourse;
     }
 
     // Calculate farewell date based on course duration
     const joining = new Date(this.joiningDate);
-    let monthsToAdd = 0;
+    let MonthsToAdd = 0;
     switch (this.courseDuration) {
-      case '3 months':
-        monthsToAdd = 3;
+      case '3 Months':
+        MonthsToAdd = 3;
         break;
-      case '6 months':
-        monthsToAdd = 6;
+      case '6 Months':
+        MonthsToAdd = 6;
         break;
-      case '1 year':
-        monthsToAdd = 12;
+      case '1 Year':
+        MonthsToAdd = 12;
         break;
     }
-    this.farewellDate = new Date(joining.setMonth(joining.getMonth() + monthsToAdd));
+    this.farewellDate = new Date(joining.setMonth(joining.getMonth() + MonthsToAdd));
   }
   next();
 });
@@ -271,8 +403,14 @@ userSchema.pre('save', async function (next) {
 // Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Auto-generate Roll Number before saving
@@ -280,7 +418,7 @@ userSchema.pre('save', async function (next) {
   if (this.rollNo) return next();
 
   const currentYear = new Date().getFullYear();
-  const lastUser = await mongoose.model('Students').findOne().sort({ rollNo: -1 });
+  const lastUser = await mongoose.model('registered_students').findOne().sort({ rollNo: -1 });
 
   let newRollNo;
   if (lastUser && lastUser.rollNo && lastUser.rollNo.startsWith(currentYear.toString())) {
@@ -294,9 +432,13 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Add password comparison method
+// Method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Create indexes for frequently queried fields
@@ -304,4 +446,6 @@ userSchema.index({ emailAddress: 1 });
 userSchema.index({ aadharNumber: 1 });
 userSchema.index({ rollNo: 1 });
 
-export default mongoose.model('Students', userSchema);
+// Export the model
+const registered_students = mongoose.models.registered_students || mongoose.model('registered_students', userSchema);
+export default registered_students;

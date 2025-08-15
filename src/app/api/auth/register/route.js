@@ -1,14 +1,47 @@
 import { NextResponse } from 'next/server';
-import Students from '../../../../models/students';
+import registered_students from '@/models/students.js';
 import jwt from 'jsonwebtoken';
-import connectDB from '../../../../lib/DBconnection';
+import connectDB from '@/lib/DBconnection';
+import { registrationLimiter } from '@/app/middleware/rateLimiter';
 
 export async function POST(request) {
   try {
-    await connectDB();
-    console.log('Registration request received');
+    // Apply rate limiter
+    const rateLimitResult = await registrationLimiter(request);
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
 
+    // Check for required environment variables
+    if (!process.env.MONGO_URI) {
+      console.error('MONGO_URI is not defined');
+      return NextResponse.json(
+        { error: 'Server configuration error: Database connection string is missing' },
+        { status: 500 }
+      );
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not defined');
+      return NextResponse.json(
+        { error: 'Server configuration error: JWT secret is missing' },
+        { status: 500 }
+      );
+    }
+
+    await connectDB();
+    
     // Parse JSON body
+    let requestBody;
+    try {
+      requestBody = await request.json();
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Invalid JSON payload' },
+        { status: 400 }
+      );
+    }
+
     const {
       fullName,
       fatherName,
@@ -25,14 +58,7 @@ export async function POST(request) {
       qualification,
       password,
       joiningDate,
-    } = await request.json();
-
-    console.log('Request body:', {
-      fullName,
-      emailAddress,
-      phoneNumber,
-      aadharNumber,
-    });
+    } = requestBody;
 
     // Validate required fields
     if (!emailAddress || !password) {
@@ -66,13 +92,13 @@ export async function POST(request) {
     }
 
     // Check for existing user
-    const existingUser = await Students.findOne({
+    const existingUser = await registered_students.findOne({
       $or: [
         { emailAddress: emailAddress.toLowerCase() },
         { aadharNumber },
         { phoneNumber },
       ],
-    });
+    }).select('+password');
 
     if (existingUser) {
       const field =
@@ -88,7 +114,7 @@ export async function POST(request) {
     }
 
     // Create new user
-    const newUser = new Students({
+    const newUser = new registered_students({
       fullName,
       fatherName,
       motherName,
@@ -109,14 +135,6 @@ export async function POST(request) {
     await newUser.save();
 
     // Generate JWT token
-    if (!process.env.JWT_SECRET) {
-      console.error('JWT_SECRET is not defined');
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
-
     const token = jwt.sign(
       { id: newUser._id, email: newUser.emailAddress },
       process.env.JWT_SECRET,
@@ -140,24 +158,26 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Registration error:', error);
+    
+    // Handle specific error types
     if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((val) => val.message);
+      const validationErrors = Object.values(error.errors).map(err => err.message);
       return NextResponse.json(
-        { error: messages.join('. ') },
+        { error: validationErrors.join('. ') },
         { status: 400 }
       );
     }
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyPattern)[0];
+    
+    if (error.name === 'MongoServerError' && error.code === 11000) {
       return NextResponse.json(
-        {
-          error: `${field.charAt(0).toUpperCase() + field.slice(1)} already registered`,
-        },
+        { error: 'A user with this email, phone number, or Aadhar number already exists' },
         { status: 409 }
       );
     }
+
+    // Generic error response
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Registration failed. Please try again.' },
       { status: 500 }
     );
   }

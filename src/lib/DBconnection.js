@@ -13,7 +13,7 @@ const connectDB = async () => {
     console.log('✅ Connected to the database');
   } catch (err) {
     console.error('❌ Database connection error:', err.message);
-    throw err; // Throw error to be handled by caller
+    throw err; 
   }
 };
 
