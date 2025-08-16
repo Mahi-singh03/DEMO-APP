@@ -7,12 +7,6 @@ const bookSchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, 'Title cannot exceed 100 characters'],
   },
-  author: {
-    type: String,
-    required: [true, 'Author name is required'],
-    trim: true,
-    maxlength: [50, 'Author name cannot exceed 50 characters'],
-  },
   description: {
     type: String,
     trim: true,
@@ -33,8 +27,9 @@ const bookSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Fiction', 'Non-Fiction', 'Science Fiction', 
-    'Biography', 'History', 'Self-Help', 'Fantasy', 'Mystery'],
+    enum: ['Basic Computer', 'MS word', 'AutoCAD', 
+      'Programming', 'Web Designing', 'Graphic Designing', 
+      'Animation', 'Computer Accountancy'],
     default: 'Other',
   },
   publishedDate: {

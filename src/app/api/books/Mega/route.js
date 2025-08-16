@@ -1,4 +1,3 @@
-// app/api/addbook/route.js
 import  connectDB  from '@/lib/DBconnection';
 import Book from '@/models/books';
 import { File, Storage } from 'megajs';
@@ -38,7 +37,6 @@ export async function POST(request) {
 
   // Extract fields
   const title = formData.get('title');
-  const author = formData.get('author');
   const description = formData.get('description');
   const category = formData.get('category');
   const publishedDate = formData.get('publishedDate');
@@ -105,13 +103,12 @@ export async function POST(request) {
     }
 
     // Validate required fields
-    if (!title || !author || !pdfUrl || !coverPhotoUrl) {
+    if (!title|| !pdfUrl || !coverPhotoUrl) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const book = new Book({
       title,
-      author,
       description,
       coverPhotoId,
       pdfUrl,
