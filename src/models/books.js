@@ -11,6 +11,7 @@ const bookSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: [500, 'Description cannot exceed 500 characters'],
+    default: '',
   },
   coverPhotoId: {
     type: String,
@@ -27,31 +28,71 @@ const bookSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Basic Computer', 'MS word', 'AutoCAD', 
-      'Programming', 'Web Designing', 'Graphic Designing', 
-      'Animation', 'Computer Accountancy'],
+    enum: [
+      'Basic Computer', 
+      'MS Word', 
+      'AutoCAD', 
+      'Programming', 
+      'Web Designing', 
+      'Graphic Designing', 
+      'Animation', 
+      'Computer Accountancy',
+      'Other'  // Added 'Other' to match your default value
+    ],
     default: 'Other',
   },
   publishedDate: {
     type: Date,
+    default: null,
+  },
+  driveLink: {
+    type: String,
+    required: [true, 'Drive link is required'],
+    trim: true,
+  },
+  username: {  // Added username field for user association
+    type: String,
+    required: true,
   },
   createdAt: {
     type: Date,
     default: Date.now,
   },
-  driveLink: {
-    type: String,
-    required: true,
-  },
   updatedAt: {
     type: Date,
     default: Date.now,
   },
+}, {
+  timestamps: false, // Disabling automatic timestamps since we're handling them manually
+  toJSON: {
+    virtuals: true,
+    transform: function(doc, ret) {
+      delete ret._id;
+      delete ret.__v;
+      ret.id = doc._id.toString();
+      return ret;
+    }
+  },
+  toObject: {
+    virtuals: true
+  }
 });
 
-bookSchema.pre('save', function (next) {
+// Indexes for better query performance
+bookSchema.index({ title: 'text', description: 'text' });
+bookSchema.index({ category: 1 });
+bookSchema.index({ username: 1 });
+
+// Update timestamp before saving
+bookSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-export default mongoose.models.Book || mongoose.model('Book', bookSchema)
+// Update timestamp before findOneAndUpdate operations
+bookSchema.pre('findOneAndUpdate', function() {
+  this.set({ updatedAt: new Date() });
+});
+
+const Book = mongoose.models.Book || mongoose.model('Book', bookSchema);
+export default Book;

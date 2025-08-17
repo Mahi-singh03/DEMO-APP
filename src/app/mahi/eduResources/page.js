@@ -1,492 +1,535 @@
-"use client"
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiUpload, FiBook, FiImage, FiCalendar, FiUser, FiType, FiInfo, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import Image from 'next/image';
+import { FiPlus, FiX, FiEdit2, FiTrash2, FiLoader, FiCheck, FiAlertCircle, FiBook, FiSearch } from 'react-icons/fi';
 
-const AddBookForm = () => {
-  const router = useRouter();
-  const formRef = useRef(null);
+export default function BookManager() {
+  const [books, setBooks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: '',
     publishedDate: '',
+    coverPhoto: null,
+    pdf: null,
   });
-  const [coverPhoto, setCoverPhoto] = useState(null);
-  const [pdfFile, setPdfFile] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const categories = [
-    'Basic Computer', 'MS word', 'AutoCAD', 
-      'Programming', 'Web Designing', 'Graphic Designing', 
-      'Animation', 'Computer Accountancy'
-  ];
+  // Fetch books
+  useEffect(() => {
+    fetchBooks();
+  }, []);
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        when: "beforeChildren"
-      }
+  const fetchBooks = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const res = await fetch('/api/books');
+      if (!res.ok) throw new Error('Failed to fetch books');
+      const data = await res.json();
+      setBooks(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100
-      }
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (e.target.name === 'coverPhoto') {
-      setCoverPhoto(file);
-    } else {
-      setPdfFile(file);
-    }
-  };
-
-  const validateStep = (step) => {
-    if (step === 1) {
-      if (!formData.title.trim()) {
-        setError('Title is required');
-        return false;
-      }
-    }
-    if (step === 2) {
-      if (!coverPhoto) {
-        setError('Cover photo is required');
-        return false;
-      }
-      if (!pdfFile) {
-        setError('PDF file is required');
-        return false;
-      }
-    }
-    setError('');
-    return true;
-  };
-
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');
-    setSuccess(false);
-
     try {
-      const formPayload = new FormData();
-      
-      // Add text fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value) formPayload.append(key, value);
-      });
-      
-      // Add files
-      if (coverPhoto) formPayload.append('coverPhoto', coverPhoto);
-      if (pdfFile) formPayload.append('pdf', pdfFile);
-
-      const response = await fetch('/api/books/Mega', {
-        method: 'POST',
-        body: formPayload,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to add book');
+      const data = new FormData();
+      for (const key in formData) {
+        if (formData[key]) data.append(key, formData[key]);
       }
 
-      const result = await response.json();
-      setSuccess(true);
-      
-      // Reset form after success
-      setTimeout(() => {
-        setFormData({
-          title: '',
-          description: '',
-          category: '',
-          publishedDate: '',
-        });
-        setCoverPhoto(null);
-        setPdfFile(null);
-        setSuccess(false);
-        setCurrentStep(1);
-        router.push('/mahi');
-      }, 1500);
+      const url = editingId ? `/api/books/${editingId}` : '/api/books';
+      const method = editingId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        body: data,
+      });
+
+      if (!res.ok) throw new Error(editingId ? 'Failed to update book' : 'Failed to add book');
+
+      await fetchBooks();
+      resetForm();
+      setIsFormOpen(false);
     } catch (err) {
-      setError(err.message || 'An error occurred while submitting the form');
-      console.error('Submission error:', err);
+      setError(err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const nextStep = () => {
-    if (!validateStep(currentStep)) return;
-    if (currentStep < 3) setCurrentStep(currentStep + 1);
+  // Handle delete
+  const handleDelete = async (id) => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`/api/books/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete book');
+      await fetchBooks();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirmId(null);
+    }
   };
 
-  const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  // Handle edit
+  const handleEdit = (book) => {
+    setFormData({
+      title: book.title,
+      description: book.description,
+      category: book.category || '',
+      publishedDate: book.publishedDate ? book.publishedDate.split('T')[0] : '',
+      coverPhoto: null,
+      pdf: null,
+    });
+    setEditingId(book._id);
+    setIsFormOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Reset form
+  const resetForm = () => {
+    setFormData({ 
+      title: '', 
+      description: '', 
+      category: '', 
+      publishedDate: '', 
+      coverPhoto: null, 
+      pdf: null 
+    });
+    setEditingId(null);
+    setError(null);
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No date';
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  // Filter books based on search and category
+  const filteredBooks = books.filter(book => {
+    const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         book.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Get unique categories
+  const categories = ['all', ...new Set(books.map(book => book.category).filter(Boolean))];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-3xl mx-auto"
-      >
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Add a New Book</h1>
-          <p className="text-lg text-gray-600">Fill in the details to add to your collection</p>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="flex justify-between mb-8 relative">
-          <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -z-10"></div>
-          {[1, 2, 3].map((step) => (
-            <div key={step} className="flex flex-col items-center">
-              <div 
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium
-                  ${currentStep >= step ? 'bg-indigo-600' : 'bg-gray-300'}`}
-              >
-                {step}
-              </div>
-              <span className={`mt-2 text-sm font-medium ${currentStep >= step ? 'text-indigo-600' : 'text-gray-500'}`}>
-                {step === 1 ? 'Details' : step === 2 ? 'Files' : 'Review'}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: currentStep === 1 ? -20 : 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: currentStep === 3 ? 20 : -20 }}
-            transition={{ duration: 0.3 }}
+    <div className="min-h-screen bg-[#030712] text-gray-100 p-4 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4"
+        >
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              Book Management
+            </h1>
+            <p className="text-gray-400">Manage your digital library collection</p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              resetForm();
+              setIsFormOpen(!isFormOpen);
+            }}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
           >
-            <form ref={formRef} onSubmit={handleSubmit} className="bg-white shadow-xl rounded-lg p-6 sm:p-8">
-              {error && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 p-4 bg-red-50 text-red-700 rounded-md border border-red-200 flex items-start"
-                >
-                  <FiInfo className="mt-0.5 mr-2 flex-shrink-0" />
-                  <span>{error}</span>
-                </motion.div>
-              )}
+            {isFormOpen ? (
+              <>
+                <FiX size={18} /> Close
+              </>
+            ) : (
+              <>
+                <FiPlus size={18} /> Add Book
+              </>
+            )}
+          </motion.button>
+        </motion.div>
 
-              {success && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 p-4 bg-green-50 text-green-700 rounded-md border border-green-200 flex items-start"
-                >
-                  <FiInfo className="mt-0.5 mr-2 flex-shrink-0" />
-                  <span>Book added successfully! Redirecting...</span>
-                </motion.div>
-              )}
+        {/* Search and Filter */}
+        <motion.div 
+          className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FiSearch className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search books..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
+          </div>
+          <div className="flex gap-2 items-center">
+            <label className="text-sm text-gray-300 whitespace-nowrap">Filter by:</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            >
+              {categories.map(category => (
+                <option key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </motion.div>
 
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="space-y-6"
+        {/* Error Message */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-red-900/50 border border-red-700 text-red-100 px-4 py-3 rounded-lg mb-6 flex items-start gap-3"
+            >
+              <FiAlertCircle className="mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Error:</p>
+                <p>{error}</p>
+              </div>
+              <button 
+                onClick={() => setError(null)} 
+                className="ml-auto text-red-300 hover:text-white"
               >
-                {/* Step 1: Book Details */}
-                {currentStep === 1 && (
-                  <>
-                    <motion.div variants={itemVariants}>
-                      <label htmlFor="title" className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                        <FiType className="mr-2 text-indigo-500" />
-                        Title *
-                      </label>
+                <FiX />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Form */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <motion.div 
+                className="bg-gray-800 p-6 rounded-xl shadow-xl mb-8 border border-gray-700"
+                initial={{ y: -20 }}
+                animate={{ y: 0 }}
+                exit={{ y: -20 }}
+              >
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  {editingId ? (
+                    <>
+                      <FiEdit2 /> Edit Book
+                    </>
+                  ) : (
+                    <>
+                      <FiPlus /> Add New Book
+                    </>
+                  )}
+                </h2>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid grid-cols-1 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Title *</label>
                       <input
                         type="text"
-                        id="title"
-                        name="title"
                         value={formData.title}
-                        onChange={handleChange}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                         required
-                        className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        aria-describedby="title-error"
+                        placeholder="e.g., The Great Gatsby"
                       />
-                    </motion.div>
-
-
-                    <motion.div variants={itemVariants}>
-                      <label htmlFor="description" className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                        <FiInfo className="mr-2 text-indigo-500" />
-                        Description
-                      </label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                       <textarea
-                        id="description"
-                        name="description"
                         value={formData.description}
-                        onChange={handleChange}
-                        rows={4}
-                        className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[120px]"
+                        placeholder="Book description..."
                       />
-                    </motion.div>
-
-                    <motion.div variants={itemVariants}>
-                      <label htmlFor="category" className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                        <FiBook className="mr-2 text-indigo-500" />
-                        Category
-                      </label>
-                      <select
-                        id="category"
-                        name="category"
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Category</label>
+                      <input
+                        type="text"
                         value={formData.category}
-                        onChange={handleChange}
-                        className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                      >
-                        <option value="">Select category</option>
-                        {categories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </motion.div>
-
-                    <motion.div variants={itemVariants}>
-                      <label htmlFor="publishedDate" className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                        <FiCalendar className="mr-2 text-indigo-500" />
-                        Published Date
-                      </label>
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        placeholder="e.g., Fiction, Science"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Published Date</label>
                       <input
                         type="date"
-                        id="publishedDate"
-                        name="publishedDate"
                         value={formData.publishedDate}
-                        onChange={handleChange}
-                        className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        onChange={(e) => setFormData({ ...formData, publishedDate: e.target.value })}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       />
-                    </motion.div>
-                  </>
-                )}
-
-                {/* Step 2: File Uploads */}
-                {currentStep === 2 && (
-                  <>
-                    <motion.div variants={itemVariants}>
-                      <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                        <FiImage className="mr-2 text-indigo-500" />
-                        Cover Photo *
-                      </label>
-                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                        <div className="space-y-1 text-center">
-                          <div className="flex text-sm text-gray-600 justify-center">
-                            <label
-                              htmlFor="coverPhoto"
-                              className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none"
-                            >
-                              <span>Upload a file</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-1">
+                                Cover Photo
+                              </label>
+                              {editingId && (
+                                <div className="mb-2">
+                                  <p className="text-sm text-gray-400 mb-1">Current Cover:</p>
+                                  <Image
+                                    src={books.find(b => b._id === editingId)?.coverPhotoUrl}
+                                    alt="Current cover"
+                                    width={100}
+                                    height={150}
+                                    className="rounded-lg border border-gray-600"
+                                  />
+                                </div>
+                              )}
                               <input
-                                id="coverPhoto"
-                                name="coverPhoto"
                                 type="file"
                                 accept="image/*"
-                                onChange={handleFileChange}
-                                required
-                                className="sr-only"
-                                aria-describedby="coverPhoto-error"
+                                onChange={(e) => setFormData({ ...formData, coverPhoto: e.target.files[0] })}
+                                className="w-full file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-600 file:text-gray-100 hover:file:bg-gray-500 transition-all"
                               />
-                            </label>
-                            <p className="pl-1">or drag and drop</p>
-                          </div>
-                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
-                          {coverPhoto && (
-                            <motion.div 
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="mt-2 text-sm text-gray-900 flex items-center justify-center"
-                            >
-                              <FiImage className="mr-2 text-indigo-500" />
-                              {coverPhoto.name} ({Math.round(coverPhoto.size / 1024)} KB)
-                            </motion.div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-
-                    <motion.div variants={itemVariants}>
-                      <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                        <FiBook className="mr-2 text-indigo-500" />
-                        PDF File *
-                      </label>
-                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                        <div className="space-y-1 text-center">
-                          <div className="flex text-sm text-gray-600 justify-center">
-                            <label
-                              htmlFor="pdf"
-                              className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none"
-                            >
-                              <span>Upload a file</span>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {editingId ? 'Leave empty to keep current' : 'Required'}
+                              </p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-1">
+                                PDF File
+                              </label>
+                              {editingId && (
+                                <div className="mb-2">
+                                  <p className="text-sm text-gray-400 mb-1">Current PDF:</p>
+                                  <a 
+                                    href={books.find(b => b._id === editingId)?.pdfUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:text-blue-300 text-sm"
+                                  >
+                                    View Current PDF
+                                  </a>
+                                </div>
+                              )}
                               <input
-                                id="pdf"
-                                name="pdf"
                                 type="file"
                                 accept=".pdf"
-                                onChange={handleFileChange}
-                                required
-                                className="sr-only"
-                                aria-describedby="pdf-error"
+                                onChange={(e) => setFormData({ ...formData, pdf: e.target.files[0] })}
+                                className="w-full file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-600 file:text-gray-100 hover:file:bg-gray-500 transition-all"
                               />
-                            </label>
-                            <p className="pl-1">or drag and drop</p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {editingId ? 'Leave empty to keep current' : 'Required'}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-xs text-gray-500">PDF up to 10MB</p>
-                          {pdfFile && (
-                            <motion.div 
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="mt-2 text-sm text-gray-900 flex items-center justify-center"
-                            >
-                              <FiBook className="mr-2 text-indigo-500" />
-                              {pdfFile.name} ({Math.round(pdfFile.size / 1024)} KB)
-                            </motion.div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-
-                {/* Step 3: Review */}
-                {currentStep === 3 && (
-                  <motion.div variants={containerVariants} className="space-y-6">
-                    <motion.h3 variants={itemVariants} className="text-lg font-medium text-gray-900">Review Your Submission</motion.h3>
-                    
-                    <motion.div variants={itemVariants} className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-700 mb-2">Book Information</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500">Title</p>
-                          <p className="font-medium">{formData.title || 'Not provided'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Category</p>
-                          <p className="font-medium">{formData.category || 'Not provided'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Published Date</p>
-                          <p className="font-medium">{formData.publishedDate || 'Not provided'}</p>
-                        </div>
-                        <div className="md:col-span-2">
-                          <p className="text-sm text-gray-500">Description</p>
-                          <p className="font-medium whitespace-pre-line">{formData.description || 'Not provided'}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-
-                    <motion.div variants={itemVariants} className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-700 mb-2">Files</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500">Cover Photo</p>
-                          <p className="font-medium">
-                            {coverPhoto ? (
-                              <span>{coverPhoto.name} ({Math.round(coverPhoto.size / 1024)} KB)</span>
-                            ) : (
-                              'Not provided'
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">PDF File</p>
-                          <p className="font-medium">
-                            {pdfFile ? (
-                              <span>{pdfFile.name} ({Math.round(pdfFile.size / 1024)} KB)</span>
-                            ) : (
-                              'Not provided'
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                )}
+                  <div className="flex justify-end gap-3 pt-2">
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      type="button"
+                      onClick={() => { resetForm(); setIsFormOpen(false); }}
+                      className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-5 py-2 rounded-lg shadow transition-all"
+                    >
+                      <FiX size={16} /> Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-5 py-2 rounded-lg shadow transition-all disabled:opacity-70"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <FiLoader className="animate-spin" size={16} /> Processing...
+                        </>
+                      ) : editingId ? (
+                        <>
+                          <FiCheck size={16} /> Update
+                        </>
+                      ) : (
+                        <>
+                          <FiPlus size={16} /> Add Book
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+                </form>
               </motion.div>
-
-              <div className="mt-8 flex justify-between">
-                {currentStep > 1 ? (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={prevStep}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    <FiChevronLeft className="mr-1" />
-                    Previous
-                  </motion.button>
-                ) : (
-                  <div></div>
-                )}
-                
-                {currentStep < 3 ? (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={nextStep}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Next
-                    <FiChevronRight className="ml-1" />
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                      isSubmitting ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
-                    }`}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Submitting...
-                      </>
-                    ) : (
-                      'Submit Book'
-                    )}
-                  </motion.button>
-                )}
-              </div>
-            </form>
-          </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
-      </motion.div>
+
+        {/* Loading State */}
+        {isLoading && !isFormOpen && (
+          <div className="flex justify-center items-center h-64">
+            <FiLoader className="animate-spin text-blue-400 text-4xl" />
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && filteredBooks.length === 0 && !isFormOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-gray-800/50 border border-gray-700 rounded-xl p-8 text-center"
+          >
+            <div className="text-gray-400 mb-4">
+              <FiBook className="inline-block text-4xl" />
+            </div>
+            <h3 className="text-xl font-medium text-gray-200 mb-2">No Books Found</h3>
+            <p className="text-gray-400 mb-4">
+              {searchTerm || selectedCategory !== 'all' 
+                ? 'Try adjusting your search or filter' 
+                : 'Add your first book to get started'}
+            </p>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2"
+            >
+              <FiPlus /> Add Book
+            </button>
+          </motion.div>
+        )}
+
+        {/* Books Grid */}
+        {!isLoading && filteredBooks.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            <AnimatePresence>
+              {filteredBooks.map((book) => (
+                <motion.div
+                  key={book._id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  whileHover={{ y: -5 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700 hover:shadow-xl transition-all"
+                >
+                  <div className="relative h-64">
+                    <Image
+                      src={book.coverPhotoUrl || '/placeholder-book.jpg'}
+                      alt={book.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  </div>
+                  <div className="p-5">
+                    <div className="flex justify-between items-start gap-3">
+                      <h2 className="text-xl font-semibold text-white line-clamp-2">{book.title}</h2>
+                      {book.publishedDate && (
+                        <span className="bg-blue-900/50 text-blue-300 text-xs px-2 py-1 rounded-full whitespace-nowrap">
+                          {formatDate(book.publishedDate)}
+                        </span>
+                      )}
+                    </div>
+                    {book.category && (
+                      <span className="inline-block bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded-full mt-2">
+                        {book.category}
+                      </span>
+                    )}
+                    <p className="text-gray-300 mt-3 line-clamp-3">{book.description}</p>
+                    <div className="flex justify-between items-center mt-4">
+                      <motion.a
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        href={book.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                      >
+                        View PDF
+                      </motion.a>
+                      <div className="flex gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleEdit(book)}
+                          className="bg-gray-700 hover:bg-gray-600 text-gray-100 p-2 rounded-lg"
+                          title="Edit"
+                        >
+                          <FiEdit2 size={18} />
+                        </motion.button>
+                        
+                        {deleteConfirmId === book._id ? (
+                          <div className="flex gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleDelete(book._id)}
+                              className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-lg flex items-center gap-1"
+                            >
+                              <FiCheck size={16} /> Confirm
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setDeleteConfirmId(null)}
+                              className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded-lg flex items-center gap-1"
+                            >
+                              <FiX size={16} /> Cancel
+                            </motion.button>
+                          </div>
+                        ) : (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setDeleteConfirmId(book._id)}
+                            className="bg-red-900/50 hover:bg-red-800/50 text-red-300 p-2 rounded-lg"
+                            title="Delete"
+                          >
+                            <FiTrash2 size={18} />
+                          </motion.button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default AddBookForm;
+}
