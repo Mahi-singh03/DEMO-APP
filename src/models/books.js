@@ -17,11 +17,6 @@ const bookSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  pdfUrl: {
-    type: String,
-    required: [true, 'PDF URL is required'],
-    trim: true,
-  },
   coverPhotoUrl: {
     type: String,
     trim: true,
@@ -37,7 +32,7 @@ const bookSchema = new mongoose.Schema({
       'Graphic Designing', 
       'Animation', 
       'Computer Accountancy',
-      'Other'  // Added 'Other' to match your default value
+      'Other'
     ],
     default: 'Other',
   },
@@ -50,10 +45,6 @@ const bookSchema = new mongoose.Schema({
     required: [true, 'Drive link is required'],
     trim: true,
   },
-  username: {  // Added username field for user association
-    type: String,
-    required: true,
-  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -63,7 +54,7 @@ const bookSchema = new mongoose.Schema({
     default: Date.now,
   },
 }, {
-  timestamps: false, // Disabling automatic timestamps since we're handling them manually
+  timestamps: false,
   toJSON: {
     virtuals: true,
     transform: function(doc, ret) {
@@ -78,18 +69,15 @@ const bookSchema = new mongoose.Schema({
   }
 });
 
-// Indexes for better query performance
 bookSchema.index({ title: 'text', description: 'text' });
 bookSchema.index({ category: 1 });
 bookSchema.index({ username: 1 });
 
-// Update timestamp before saving
 bookSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// Update timestamp before findOneAndUpdate operations
 bookSchema.pre('findOneAndUpdate', function() {
   this.set({ updatedAt: new Date() });
 });

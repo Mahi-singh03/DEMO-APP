@@ -12,22 +12,29 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function POST(req) {
+export async function PUT(req, { params }) {
   try {
     await connectDB();
     const formData = await req.formData();
     const title = formData.get('title');
-    const description = formData.get('description') || '';
-    const category = formData.get('category') || 'Other';
+    const description = formData.get('description');
+    const category = formData.get('category');
     const publishedDate = formData.get('publishedDate');
     const pdfUrl = formData.get('pdfUrl');
     const coverPhoto = formData.get('coverPhoto');
 
-    if (!title || !pdfUrl  || !username) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const book = await Book.findById(params.id);
+    if (!book) {
+      return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
 
-    let coverPhotoData = {};
+    if (title) book.title = title;
+    if (description !== undefined) book.description = description;
+    if (category) book.category = category;
+    if (publishedDate) book.publishedDate = new Date(publishedDate);
+    if (pdfUrl) book.pdfUrl = pdfUrl;
+  
+
     if (coverPhoto) {
       const bytes = await coverPhoto.arrayBuffer();
       const buffer = Buffer.from(bytes);
@@ -42,46 +49,35 @@ export async function POST(req) {
         uploadStream.end(buffer);
       });
 
-      coverPhotoData = {
-        coverPhotoId: uploadResult.public_id,
-        coverPhotoUrl: uploadResult.secure_url,
-      };
+      if (book.coverPhotoId) {
+        await cloudinary.uploader.destroy(book.coverPhotoId);
+      }
+
+      book.coverPhotoId = uploadResult.public_id;
+      book.coverPhotoUrl = uploadResult.secure_url;
     }
 
-    const book = new Book({
-      title,
-      description,
-      category,
-      publishedDate: publishedDate ? new Date(publishedDate) : null,
-      pdfUrl,
-
-      ...coverPhotoData,
-    });
-
     await book.save();
-    return NextResponse.json(book, { status: 201 });
+    return NextResponse.json(book);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function GET(req) {
+export async function DELETE(req, { params }) {
   try {
     await connectDB();
-    const { searchParams } = new URL(req.url);
-    const name = searchParams.get('name');
-    const category = searchParams.get('category');
-
-    let books;
-    if (name) {
-      books = await Book.find({ $text: { $search: name } });
-    } else if (category) {
-      books = await Book.find({ category });
-    } else {
-      books = await Book.find({});
+    const book = await Book.findById(params.id);
+    if (!book) {
+      return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
 
-    return NextResponse.json(books);
+    if (book.coverPhotoId) {
+      await cloudinary.uploader.destroy(book.coverPhotoId);
+    }
+
+    await Book.findByIdAndDelete(params.id);
+    return NextResponse.json({ message: 'Book deleted successfully' });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
