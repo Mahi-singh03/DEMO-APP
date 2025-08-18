@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
-const bookSchema = new mongoose.Schema({
+const resourceSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Book title is required'],
+    required: [true, 'Resource title is required'],
     trim: true,
     maxlength: [100, 'Title cannot exceed 100 characters'],
   },
@@ -40,9 +40,12 @@ const bookSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
-  driveLink: {
+  pdfUrl: {
     type: String,
-    required: [true, 'Drive link is required'],
+    trim: true,
+  },
+  pdfLink: {
+    type: String,
     trim: true,
   },
   createdAt: {
@@ -69,18 +72,17 @@ const bookSchema = new mongoose.Schema({
   }
 });
 
-bookSchema.index({ title: 'text', description: 'text' });
-bookSchema.index({ category: 1 });
-bookSchema.index({ username: 1 });
+resourceSchema.index({ title: 'text', description: 'text' });
+resourceSchema.index({ category: 1 });
 
-bookSchema.pre('save', function(next) {
+resourceSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-bookSchema.pre('findOneAndUpdate', function() {
+resourceSchema.pre('findOneAndUpdate', function() {
   this.set({ updatedAt: new Date() });
 });
 
-const Book = mongoose.models.Book || mongoose.model('Book', bookSchema);
-export default Book;
+const Resource = mongoose.models.Resource || mongoose.model('Resource', resourceSchema);
+export default Resource;

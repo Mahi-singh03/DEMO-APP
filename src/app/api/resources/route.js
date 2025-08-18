@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { Storage } from 'megajs';
 import connectDB from '@/lib/DBconnection';
-import Book from '@/models/books';
+import Resource from '@/models/books';
 
 export const runtime = 'nodejs';
 
@@ -20,20 +21,48 @@ export async function POST(req) {
     const description = formData.get('description') || '';
     const category = formData.get('category') || 'Other';
     const publishedDate = formData.get('publishedDate');
-    const pdfUrl = formData.get('pdfUrl');
+    const pdfFile = formData.get('pdfFile');
     const coverPhoto = formData.get('coverPhoto');
 
-    if (!title || !pdfUrl  || !username) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!title || !pdfFile) {
+      return NextResponse.json({ error: 'Title and PDF file are required' }, { status: 400 });
     }
 
+    // Connect to MEGA
+    const storage = new Storage({
+      email: process.env.MEGA_EMAIL,
+      password: process.env.MEGA_PASSWORD,
+    });
+    
+    await new Promise((resolve, reject) => {
+      storage.on('ready', resolve);
+      storage.on('error', reject);
+    });
+
+    // Upload PDF to MEGA
+    const pdfBuffer = Buffer.from(await pdfFile.arrayBuffer());
+    const uploadStream = storage.upload(pdfFile.name, pdfBuffer);
+    
+    let uploadedFile;
+    await new Promise((resolve, reject) => {
+      uploadStream.on('complete', (file) => {
+        uploadedFile = file;
+        resolve();
+      });
+      uploadStream.on('error', reject);
+    });
+    
+    const pdfUrl = await uploadedFile.link();
+    const pdfLink = pdfUrl;
+
+    // Handle cover photo upload to Cloudinary
     let coverPhotoData = {};
     if (coverPhoto) {
       const bytes = await coverPhoto.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const uploadResult = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'book_covers' },
+          { folder: 'resource_covers' },
           (error, result) => {
             if (error) reject(error);
             else resolve(result);
@@ -48,19 +77,20 @@ export async function POST(req) {
       };
     }
 
-    const book = new Book({
+    const resource = new Resource({
       title,
       description,
       category,
       publishedDate: publishedDate ? new Date(publishedDate) : null,
       pdfUrl,
-
+      pdfLink,
       ...coverPhotoData,
     });
 
-    await book.save();
-    return NextResponse.json(book, { status: 201 });
+    await resource.save();
+    return NextResponse.json(resource, { status: 201 });
   } catch (error) {
+    console.error('Error creating resource:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -72,16 +102,16 @@ export async function GET(req) {
     const name = searchParams.get('name');
     const category = searchParams.get('category');
 
-    let books;
+    let resources;
     if (name) {
-      books = await Book.find({ $text: { $search: name } });
+      resources = await Resource.find({ $text: { $search: name } });
     } else if (category) {
-      books = await Book.find({ category });
+      resources = await Resource.find({ category });
     } else {
-      books = await Book.find({});
+      resources = await Resource.find({});
     }
 
-    return NextResponse.json(books);
+    return NextResponse.json(resources);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
