@@ -3,10 +3,6 @@ const nextConfig = {
   images: {
     domains: ['res.cloudinary.com'],
   },
-  experimental: {
-    serverActions: {
-    },
-  },
   eslint: {
     ignoreDuringBuilds: true,
   },
