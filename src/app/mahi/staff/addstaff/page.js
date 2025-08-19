@@ -72,7 +72,7 @@ const AddStaff = () => {
     }
   };
 
-  const handleGoToHome = () => router.push('/CS');
+  const handleGoToHome = () => router.push('/mahi');
 
   if (!isMounted) return null;
 

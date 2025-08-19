@@ -45,7 +45,7 @@ export default function AdminLogin() {
       }))
 
       // Redirect to admin dashboard
-      router.push('/CS')
+      router.push('/mahi')
     } catch (err) {
       setError(err.message || 'An error occurred. Please try again.')
     } finally {

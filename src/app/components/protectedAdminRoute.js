@@ -11,7 +11,7 @@ export default function ProtectedAdminRoute({ children }) {
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || !isAdmin)) {
-      router.push("/admin-login");
+      router.push("/adminLogin");
     }
   }, [loading, isAuthenticated, isAdmin, router]);
 
