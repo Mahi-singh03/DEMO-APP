@@ -16,11 +16,11 @@ staffSchema.pre('save', async function(next) {
   if (this.StaffID) return next(); // Skip if StaffID already exists
 
   // Find the last staff member to get the highest StaffID
-  const lastStaff = await mongoose.model('Staff Data')
+  const lastStaff = await mongoose.model('Staff')
     .findOne()
     .sort({ StaffID: -1 });
 
-  let newStaffID = 1; // Default starting ID
+  let newStaffID = 2025001; // Default starting ID
   if (lastStaff && lastStaff.StaffID) {
     newStaffID = lastStaff.StaffID + 1;
   }
@@ -29,6 +29,5 @@ staffSchema.pre('save', async function(next) {
   next();
 });
 
-const Staff = mongoose.model('Staff Data', staffSchema);
-
-export default Staff;
+// Prevent model overwrite upon hot-reload
+export default mongoose.models.staffs || mongoose.model('staffs', staffSchema);

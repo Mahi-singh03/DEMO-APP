@@ -8,13 +8,15 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { FaChalkboardTeacher } from "react-icons/fa";
 import { 
   FaUserGraduate, FaEdit, FaUserEdit,
   FaMoneyBillWave, FaUsers, FaCamera, FaCertificate,
   FaChevronLeft, FaChevronRight, FaSignOutAlt, FaCalendarAlt,
   FaTimes, FaHome, FaChartLine, FaCog, FaUserShield, FaImages,
-  FaBook, FaVideo, FaTrophy, FaGraduationCap
+  FaBook, FaVideo, FaTrophy, 
 } from 'react-icons/fa';
+import { IoPersonAdd } from "react-icons/io5";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,7 @@ const AdminDashboard = () => {
           fetch('/api/admin/stats?type=total', { method: 'GET' }),
           fetch('/api/admin/stats?type=active', { method: 'GET' }),
           fetch('/api/admin/stats?type=certified', { method: 'GET' }),
-          fetch('/api/admin/stats?type=admins', { method: 'GET' }),
+          fetch('/api/admin/stats?type=staff', { method: 'GET' }),
         ]);
 
         // Check response status
@@ -123,10 +125,10 @@ const AdminDashboard = () => {
       id: 'edit-achievements', 
       title: 'Edit Achievements', 
       icon: <FaTrophy className="text-4xl" />,
-      bgColor: 'bg-white',
+      bgColor: 'bg-green-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/skillup/edit-achievements'
+      path: '/mahi/achievements'
     },
     { 
       id: 'add-admin', 
@@ -148,19 +150,19 @@ const AdminDashboard = () => {
     },
     { 
       id: 'add-resources', 
-      title: 'Add Resources', 
+      title: 'Edit Resources', 
       icon: <FaBook className="text-4xl" />,
-      bgColor: 'bg-white',
+      bgColor: 'bg-red-100',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/skillup/add-resources'
+      path: '/mahi/eduResources'
     },
     { 
       id: 'edit-courses', 
       title: 'Edit Online Courses', 
       icon: <FaVideo className="text-4xl" />,
       bgColor: 'bg-white',
-      hoverBgColor: 'bg-blue-50',
+      hoverBgColor: 'bg-green-50',
       textColor: 'text-blue-800',
       path: '/skillup/edit-courses'
     },
@@ -172,25 +174,25 @@ const AdminDashboard = () => {
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/skillup/fees'
-    },
-    { 
-      id: 'graduation', 
-      title: 'Graduation', 
-      icon: <FaGraduationCap className="text-4xl" />,
-      bgColor: 'bg-white',
-      hoverBgColor: 'bg-blue-50',
-      textColor: 'text-blue-800',
-      path: '/skillup/graduation'
-    },
-    { 
-      id: 'reports', 
-      title: 'Reports', 
-      icon: <FaChartLine className="text-4xl" />,
+    }, { 
+      id: 'Add Staff', 
+      title: 'Add Staff', 
+      icon: <IoPersonAdd className="text-4xl" />,
       bgColor: 'bg-white',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/skillup/reports'
-    }
+    },
+    { 
+      id: 'edit staff', 
+      title: 'Edit Staff', 
+      icon: <FaChalkboardTeacher className="text-4xl" />,
+      bgColor: 'bg-white',
+      hoverBgColor: 'bg-blue-50',
+      textColor: 'text-blue-800',
+      path: '/mahi/staff/editStaff'
+    },
+   
   ];
 
   const handlePrevMonth = () => {
@@ -257,7 +259,7 @@ const AdminDashboard = () => {
             >
               <FaUserShield className="text-white text-xl" />
             </motion.div>
-            <h1 className="text-3xl font-bold text-blue-800 ml-2 p-4">SkillUp Admin Portal</h1>
+            <h1 className="text-3xl font-bold text-blue-800 ml-2 p-4">Admin Portal</h1>
           </Link>
         </div>
         
@@ -322,7 +324,7 @@ const AdminDashboard = () => {
                 <p className="text-2xl font-bold text-blue-800">{stats.totalStudents}</p>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
-                <p className="text-sm text-blue-700 font-medium">Admins</p>
+                <p className="text-sm text-blue-700 font-medium">Staff</p>
                 <p className="text-2xl font-bold text-blue-800">{stats.totalAdmins}</p>
               </div>
             </motion.div>
@@ -386,7 +388,7 @@ const AdminDashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setCalendarOpen(false)}
-              className="fixed inset-0 bg-black bg-opacity-20 z-40 backdrop-blur-sm"
+              className="fixed inset-0 bg-blur bg-opacity-20 z-40 backdrop-blur-sm"
             />
             
             <motion.aside
