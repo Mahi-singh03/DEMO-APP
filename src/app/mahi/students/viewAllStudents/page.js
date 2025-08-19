@@ -151,6 +151,15 @@ const StudentManagement = () => {
     );
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50">
@@ -404,11 +413,11 @@ const StudentManagement = () => {
                           <div className="flex items-center text-gray-600">
                             <FiCalendar className="mr-2 text-blue-500" />
                             <span className="text-sm">
-                              {new Date(student.joiningDate).toLocaleDateString()} -{' '}
-                              {student.farewellDate ? new Date(student.farewellDate).toLocaleDateString() : 'Present'}
+                              {formatDate(student.joiningDate)} -{' '}
+                              {student.farewellDate ? formatDate(student.farewellDate) : 'Present'}
                             </span>
                           </div>
-                        </div>
+                        </div>  
                       </div>
                     </motion.div>
                   ))
