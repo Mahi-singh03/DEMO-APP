@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import registered_students from '../../../../models/students'; 
-import dbConnect from '../../../../lib/DBconnection'; 
-import staff from "../../../../models/staff"
+import registered_students from '@/models/students'; 
+import dbConnect from '@/lib/DBconnection'; 
+import staff from "@/models/staff";
 
 export async function GET(request) {
   await dbConnect();

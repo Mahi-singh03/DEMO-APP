@@ -30,7 +30,7 @@ const AdminDashboard = () => {
     totalStudents: 0,
     activeStudents: 0,
     certifiedStudents: 0,
-    totalAdmins: 0,
+    totalstaff: 0,
   });
   const [statsError, setStatsError] = useState(null);
 
@@ -45,7 +45,7 @@ const AdminDashboard = () => {
         }
 
         // Fetch student and admin stats from API
-        const [totalRes, activeRes, certifiedRes, adminRes] = await Promise.all([
+        const [totalRes, activeRes, certifiedRes, staffRes] = await Promise.all([
           fetch('/api/admin/stats?type=total', { method: 'GET' }),
           fetch('/api/admin/stats?type=active', { method: 'GET' }),
           fetch('/api/admin/stats?type=certified', { method: 'GET' }),
@@ -57,7 +57,7 @@ const AdminDashboard = () => {
         if (!totalRes.ok) errors.push(`Total: ${totalRes.status}`);
         if (!activeRes.ok) errors.push(`Active: ${activeRes.status}`);
         if (!certifiedRes.ok) errors.push(`Certified: ${certifiedRes.status}`);
-        if (!adminRes.ok) errors.push(`Admins: ${adminRes.status}`);
+        if (!staffRes.ok) errors.push(`Staff: ${staffRes.status}`);
         if (errors.length > 0) {
           throw new Error(`Failed to fetch data: ${errors.join(', ')}`);
         }
@@ -65,13 +65,13 @@ const AdminDashboard = () => {
         const totalData = await totalRes.json();
         const activeData = await activeRes.json();
         const certifiedData = await certifiedRes.json();
-        const adminStatsData = await adminRes.json();
+        const staffData = await staffRes.json();
 
         setStats({
           totalStudents: totalData.data?.totalStudents || 0,
           activeStudents: activeData.data?.activeStudents || 0,
           certifiedStudents: certifiedData.data?.certifiedStudents || 0,
-          totalAdmins: adminStatsData.data?.totalAdmins || 0,
+          totalstaff: staffData.data?.certifiedStaff || 0, // <-- FIXED: use certifiedStaff
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -325,7 +325,7 @@ const AdminDashboard = () => {
               </div>
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
                 <p className="text-sm text-blue-700 font-medium">Staff</p>
-                <p className="text-2xl font-bold text-blue-800">{stats.totalAdmins}</p>
+                <p className="text-2xl font-bold text-blue-800">{stats.totalstaff}</p>
               </div>
             </motion.div>
           )}

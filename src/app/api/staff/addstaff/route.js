@@ -10,6 +10,7 @@ export async function POST(request) {
     await newStaff.save();
     return Response.json(newStaff, { status: 201 });
   } catch (error) {
+    console.error(error); // Add this line for debugging
     if (error.name === 'ValidationError') {
       return Response.json({ message: error.message }, { status: 400 });
     }
