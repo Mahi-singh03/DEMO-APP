@@ -110,7 +110,7 @@ const AdminDashboard = () => {
       bgColor: 'bg-white',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/skillup/students/edit-student'
+      path: '/mahi/students/editStudent/${student._id}'
     },
     { 
       id: 'certificates', 
