@@ -1,6 +1,5 @@
-// /src/app/api/cloudinary/route.js
-
 import { v2 as cloudinary } from 'cloudinary';
+import { NextResponse } from 'next/server';
 
 // Configure Cloudinary using environment variables
 cloudinary.config({
@@ -9,12 +8,15 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// GET method export for Next.js App Router
+// GET method to fetch all photos
 export async function GET() {
   try {
     // Verify Cloudinary configuration
     if (!process.env.CLOUDINARY_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      throw new Error('Cloudinary configuration is incomplete');
+      return NextResponse.json(
+        { error: 'Cloudinary configuration is incomplete' },
+        { status: 500 }
+      );
     }
 
     const result = await cloudinary.search
@@ -25,7 +27,10 @@ export async function GET() {
       .execute();
 
     if (!result || !result.resources) {
-      throw new Error('Invalid response from Cloudinary');
+      return NextResponse.json(
+        { error: 'Invalid response from Cloudinary' },
+        { status: 500 }
+      );
     }
 
     const images = result.resources.map(file => ({
@@ -34,27 +39,85 @@ export async function GET() {
       context: file.context || null,
     }));
 
-    // Return a properly formatted JSON response
-    return new Response(JSON.stringify({ images }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return NextResponse.json({ images });
   } catch (error) {
     console.error('Cloudinary fetch error:', error);
-    // Return a properly formatted error response
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Failed to fetch images from Cloudinary',
-        details: error.stack
-      }), 
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+    return NextResponse.json(
+      { error: error.message || 'Failed to fetch images from Cloudinary' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST method to upload a photo
+export async function POST(request) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file');
+    
+    if (!file) {
+      return NextResponse.json(
+        { error: 'No file provided' },
+        { status: 400 }
+      );
+    }
+
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { folder: 'gallery' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(buffer);
+    });
+
+    return NextResponse.json({
+      publicId: result.public_id,
+      url: result.secure_url
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to upload image' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE method to delete a photo
+export async function DELETE(request) {
+  try {
+    const { public_id } = await request.json();
+    
+    if (!public_id) {
+      return NextResponse.json(
+        { error: 'No public_id provided' },
+        { status: 400 }
+      );
+    }
+
+    // Delete from Cloudinary
+    const result = await cloudinary.uploader.destroy(public_id);
+
+    if (result.result !== 'ok') {
+      return NextResponse.json(
+        { error: 'Failed to delete image from Cloudinary' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Delete error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete image' },
+      { status: 500 }
     );
   }
 }
