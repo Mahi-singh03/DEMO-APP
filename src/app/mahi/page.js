@@ -110,7 +110,7 @@ const AdminDashboard = () => {
       bgColor: 'bg-white',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/mahi/students/editStudent/${student._id}'
+      path: '/mahi/students/editStudent'
     },
     { 
       id: 'certificates', 

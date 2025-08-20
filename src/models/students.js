@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { max } from 'date-fns';
 
 const userSchema = new mongoose.Schema({
   fullName: {
@@ -177,11 +178,13 @@ const userSchema = new mongoose.Schema({
     enum: ['A', 'B', 'C', 'D', 'F', 'Pending'],
     default: 'Pending',
   },
-  session: {
-    type: String,
-    required: [false, 'Session is required'],
-    trim: true,
+  totalAchievedMarks:{ 
+    type: Number, 
+    default: 0 ,
+    min:0,
+    max:100,
   },
+  
   percentage: {
     type: Number,
     default: 0,
