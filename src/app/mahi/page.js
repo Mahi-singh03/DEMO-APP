@@ -134,16 +134,16 @@ const AdminDashboard = () => {
       id: 'add-admin', 
       title: 'Add Admin', 
       icon: <FaUserShield className="text-4xl" />,
-      bgColor: 'bg-white',
+      bgColor: 'bg-orange-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/skillup/add-admin'
+      path: '/mahi/register'
     },
     { 
       id: 'edit-gallery', 
       title: 'Edit Gallery', 
       icon: <FaImages className="text-4xl" />,
-      bgColor: 'bg-white',
+      bgColor: 'bg-green-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/mahi/gallery/editGallery'
@@ -152,7 +152,7 @@ const AdminDashboard = () => {
       id: 'add-resources', 
       title: 'Edit Resources', 
       icon: <FaBook className="text-4xl" />,
-      bgColor: 'bg-red-100',
+      bgColor: 'bg-red-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/mahi/eduResources'

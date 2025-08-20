@@ -17,17 +17,25 @@ export default function CloudinaryUploader() {
     fetchPhotos();
   }, []);
 
-  const fetchPhotos = async () => {
-    try {
-      const res = await fetch('/api/gallery/getAllPhoto');
-      if (!res.ok) throw new Error('Failed to fetch photos');
-      const data = await res.json();
-      setPhotos(data.photos || []);
-    } catch (error) {
-      console.error('Error fetching photos:', error);
-      setError('Failed to load photos. Please try refreshing the page.');
-    }
-  };
+const fetchPhotos = async () => {
+  try {
+    const res = await fetch('/api/gallery/getAllPhoto');
+    if (!res.ok) throw new Error('Failed to fetch photos');
+    const data = await res.json();
+    
+    // Map the response to match your component's expected format
+    const formattedPhotos = data.images.map(image => ({
+      public_id: image.publicId,
+      url: image.url,
+      // Add any other properties you might need
+    }));
+    
+    setPhotos(formattedPhotos || []);
+  } catch (error) {
+    console.error('Error fetching photos:', error);
+    setError('Failed to load photos. Please try refreshing the page.');
+  }
+};
 
   const onDrop = useCallback(async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
@@ -52,11 +60,11 @@ export default function CloudinaryUploader() {
 
         if (!response.ok) throw new Error('Upload failed');
 
-        const data = await response.json();
-        uploadedPhotos.push({
-          public_id: data.public_id,
-          url: data.url,
-        });
+                const data = await response.json();
+          uploadedPhotos.push({
+            public_id: data.public_id || data.publicId, // Handle both possibilities
+            url: data.url,
+          });
         
         // Calculate progress with a slight delay for smoother animation
         setTimeout(() => {
@@ -97,7 +105,7 @@ export default function CloudinaryUploader() {
     try {
       setIsDeleting(true);
       setError(null);
-      const response = await fetch('/api/admin/uploadPhotoAndDeletePhoto', {
+      const response = await fetch('/api/admin/gallery/editGallery', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
