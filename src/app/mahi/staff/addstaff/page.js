@@ -1,7 +1,19 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FiUser, 
+  FiCalendar, 
+  FiBriefcase, 
+  FiHome, 
+  FiCheckCircle, 
+  FiAlertCircle, 
+  FiLoader, 
+  FiX,
+  FiArrowLeft,
+  FiArrowUp
+} from 'react-icons/fi';
 
 const AddStaff = () => {
   const router = useRouter();
@@ -19,19 +31,96 @@ const AddStaff = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [generatedStaffId, setGeneratedStaffId] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  
+  const formRef = useRef(null);
 
   useEffect(() => {
     setIsMounted(true);
-    return () => setIsMounted(false);
+    
+    // Handle scroll events for scroll-to-top button
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      setIsMounted(false);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        when: "beforeChildren"
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 10
+      }
+    }
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.95 }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.Name.trim()) errors.Name = 'Name is required';
+    if (!formData.Designation.trim()) errors.Designation = 'Designation is required';
+    if (!formData.DOB) errors.DOB = 'Date of birth is required';
+    if (!formData.JoinningData) errors.JoinningData = 'Joining date is required';
+    if (!formData.FatherName.trim()) errors.FatherName = 'Father\'s name is required';
+    if (!formData.Address.trim()) errors.Address = 'Address is required';
+    
+    // Validate dates
+    if (formData.DOB && formData.JoinningData) {
+      const dobDate = new Date(formData.DOB);
+      const joinDate = new Date(formData.JoinningData);
+      
+      if (dobDate > joinDate) {
+        errors.DOB = 'Date of birth cannot be after joining date';
+      }
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    
+    // Clear error when field is edited
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+    
     setLoading(true);
     setError('');
     setShowPopup(false);
@@ -73,172 +162,255 @@ const AddStaff = () => {
   };
 
   const handleGoToHome = () => router.push('/mahi');
+  const handleGoToStaffList = () => router.push('/mahi/staff/editStaff');
+
+  // Scroll to top function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (!isMounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#030712] pt-12 px-4 py-6 flex items-center justify-center">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-gray-800 p-6 sm:p-8 rounded-xl shadow-2xl"
-      >
-        <motion.h1 
-          className="text-2xl sm:text-3xl font-bold text-blue-400 text-center mb-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
         >
-          Add New Staff Member
-        </motion.h1>
-
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-          {[
-            { label: 'Name', name: 'Name', type: 'text', required: true },
-            { label: 'Joining Date', name: 'JoinningData', type: 'date', required: true },
-            { label: 'Designation', name: 'Designation', type: 'text', required: true },
-            { label: 'Date of Birth', name: 'DOB', type: 'date', required: true },
-            { label: "Father's Name", name: 'FatherName', type: 'text', required: true },
-            { label: 'Address', name: 'Address', type: 'text', required: true },
-          ].map((field, index) => (
-            <motion.div
-              key={field.name}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + index * 0.05 }}
-            >
-              <label className="block text-gray-300 text-sm font-medium mb-1">
-                {field.label}
-              </label>
-              <input
-                type={field.type}
-                name={field.name}
-                required={field.required}
-                className="w-full px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-200 placeholder-gray-400 disabled:opacity-50 transition-colors duration-200"
-                placeholder={`Enter ${field.label.toLowerCase()}`}
-                value={formData[field.name]}
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </motion.div>
-          ))}
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <label className="block text-gray-300 text-sm font-medium mb-1">
-              Leaving Date (Optional)
-            </label>
-            <input
-              type="date"
-              name="LeavingDate"
-              className="w-full px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-200 placeholder-gray-400 disabled:opacity-50 transition-colors duration-200"
-              value={formData.LeavingDate}
-              onChange={handleChange}
-              disabled={loading}
-            />
-          </motion.div>
-
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+          <div className="p-6">
+            <motion.header variants={itemVariants} className="flex items-center space-x-4 mb-6">
+              <button 
+                onClick={() => router.push('/mahi/staff/editStaff')}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Back to staff list"
               >
-                <div className="text-red-400 text-sm flex items-center gap-2 bg-red-900/30 p-2 rounded-lg">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                  {error}
+                <FiArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-blue-600">Add New Staff</h1>
+                <p className="text-gray-600 text-sm">Create a new staff member profile</p>
+              </div>
+            </motion.header>
+
+            <form onSubmit={handleSubmit} className="space-y-4" ref={formRef}>
+              {[
+                {
+                  label: 'Full Name *',
+                  name: 'Name',
+                  type: 'text',
+                  icon: <FiUser className="text-gray-400" />,
+                  error: formErrors.Name
+                },
+                {
+                  label: 'Joining Date *',
+                  name: 'JoinningData',
+                  type: 'date',
+                  icon: <FiCalendar className="text-gray-400" />,
+                  error: formErrors.JoinningData
+                },
+                {
+                  label: 'Designation *',
+                  name: 'Designation',
+                  type: 'text',
+                  icon: <FiBriefcase className="text-gray-400" />,
+                  error: formErrors.Designation
+                },
+                {
+                  label: 'Date of Birth *',
+                  name: 'DOB',
+                  type: 'date',
+                  icon: <FiCalendar className="text-gray-400" />,
+                  error: formErrors.DOB
+                },
+                {
+                  label: "Father's Name *",
+                  name: 'FatherName',
+                  type: 'text',
+                  icon: <FiUser className="text-gray-400" />,
+                  error: formErrors.FatherName
+                },
+                {
+                  label: 'Leaving Date (Optional)',
+                  name: 'LeavingDate',
+                  type: 'date',
+                  icon: <FiCalendar className="text-gray-400" />
+                }
+              ].map((field, index) => (
+                <motion.div
+                  key={field.name}
+                  variants={itemVariants}
+                  className="space-y-1"
+                >
+                  <label className="block text-sm font-medium text-gray-700">
+                    {field.label}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      {field.icon}
+                    </div>
+                    <input
+                      type={field.type}
+                      name={field.name}
+                      className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        field.error ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
+                      placeholder={`Enter ${field.label.toLowerCase()}`}
+                      value={formData[field.name]}
+                      onChange={handleChange}
+                      disabled={loading}
+                    />
+                  </div>
+                  {field.error && (
+                    <p className="text-sm text-red-600">{field.error}</p>
+                  )}
+                </motion.div>
+              ))}
+
+              <motion.div variants={itemVariants} className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Address *
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 pt-3 pointer-events-none">
+                    <FiHome className="text-gray-400" />
+                  </div>
+                  <textarea
+                    name="Address"
+                    rows={3}
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical ${
+                      formErrors.Address ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter address"
+                    value={formData.Address}
+                    onChange={handleChange}
+                    disabled={loading}
+                  />
+                </div>
+                {formErrors.Address && (
+                  <p className="text-sm text-red-600">{formErrors.Address}</p>
+                )}
+              </motion.div>
+
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg flex items-start gap-3">
+                      <FiAlertCircle className="mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium">Error:</p>
+                        <p>{error}</p>
+                      </div>
+                      <button 
+                        onClick={() => setError('')} 
+                        className="ml-auto text-red-500 hover:text-red-700"
+                      >
+                        <FiX />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.div variants={itemVariants}>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-2 px-4 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {loading ? (
+                    <>
+                      <FiLoader className="animate-spin mr-2" />
+                      Adding Staff...
+                    </>
+                  ) : (
+                    <>
+                      <FiUser className="mr-2" />
+                      Add Staff Member
+                    </>
+                  )}
+                </button>
+              </motion.div>
+            </form>
+          </div>
+        </motion.div>
+
+        <AnimatePresence>
+          {showPopup && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            >
+              <motion.div
+                variants={modalVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-gray-200"
+              >
+                <div className="flex items-start mb-4">
+                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <FiCheckCircle className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-medium text-gray-900">Success!</h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600">
+                        New staff member <strong className="text-gray-900">{formData.Name || 'Staff'}</strong> has been added successfully.
+                      </p>
+                      {generatedStaffId && (
+                        <div className="mt-3 bg-blue-50 p-3 rounded-lg">
+                          <p className="text-sm font-medium text-blue-800">Staff ID:</p>
+                          <p className="text-lg font-bold text-blue-900">{generatedStaffId}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                  <button
+                    onClick={handleGoToStaffList}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                  >
+                    View Staff List
+                  </button>
+                  <button
+                    onClick={handleGoToHome}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                  >
+                    Go to Dashboard
+                  </button>
                 </div>
               </motion.div>
-            )}
-          </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-          >
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 px-4 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm sm:text-base transform hover:scale-[1.01] active:scale-[0.99]"
-            >
-              {loading ? (
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6z" />
-                  </svg>
-                  Add Staff
-                </span>
-              )}
-            </button>
-          </motion.div>
-        </form>
+        {/* Scroll to Top Button */}
         <AnimatePresence>
-            {showPopup && (
-                <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 flex items-center justify-center z-50 p-4"
-                >
-                {/* Blurred background overlay */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-blur bg-opacity-70 backdrop-blur-sm"
-                />
-                
-                {/* Popup content */}
-                <motion.div
-                    initial={{ scale: 0.9, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    exit={{ scale: 0.9, y: 20 }}
-                    className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-xl max-w-md w-full border border-gray-700 relative z-10"
-                >
-                    <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-full bg-green-900/30">
-                        <svg className="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                    </div>
-                    <h2 className="text-xl font-bold text-green-400">Success!</h2>
-                    </div>
-                    <p className="text-gray-300 mb-6">
-                    New staff member <strong className="text-white">{formData.Name || 'Staff'}</strong> has been added
-                    successfully. {generatedStaffId && (
-                        <span className="block mt-2 bg-gray-700 px-3 py-2 rounded-md text-blue-300 font-mono">
-                        Staff ID: {generatedStaffId}
-                        </span>
-                    )}
-                    </p>
-                    <button
-                    onClick={handleGoToHome}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2"
-                    >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                    </svg>
-                    Go to Dashboard
-                    </button>
-                </motion.div>
-                </motion.div>
-            )}
-            </AnimatePresence>
-      </motion.div>
+          {showScrollTop && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              onClick={scrollToTop}
+              className="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition z-50"
+              aria-label="Scroll to top"
+            >
+              <FiArrowUp size={20} />
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };

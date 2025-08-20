@@ -1,9 +1,24 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiTrash2, FiSave, FiX, FiAlertCircle, FiCheckCircle, FiLoader, FiCalendar, FiUser, FiBriefcase, FiHome, FiChevronLeft } from 'react-icons/fi';
+import { 
+  FiTrash2, 
+  FiSave, 
+  FiX, 
+  FiAlertCircle, 
+  FiCheckCircle, 
+  FiLoader, 
+  FiCalendar, 
+  FiUser, 
+  FiBriefcase, 
+  FiHome, 
+  FiChevronLeft,
+  FiArrowUp,
+  FiRefreshCw
+} from 'react-icons/fi';
+import { useDebounce } from 'use-debounce';
 
 const EditStaff = () => {
   const router = useRouter();
@@ -16,8 +31,10 @@ const EditStaff = () => {
   const [success, setSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [formErrors, setFormErrors] = useState({});
-  const [darkMode, setDarkMode] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   
+  const formRef = useRef(null);
+
   const [formData, setFormData] = useState({
     Name: '',
     StaffID: '',
@@ -29,11 +46,15 @@ const EditStaff = () => {
     Address: ''
   });
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
-  };
+  // Handle scroll events for scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Animation variants
   const containerVariants = {
@@ -207,23 +228,28 @@ const EditStaff = () => {
     }
   };
 
+  // Scroll to top function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (isLoading) return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gray-50 dark:bg-[#030712]">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50">
       <div className="w-full max-w-4xl">
         <div className="animate-pulse space-y-6">
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-8"></div>
+          <div className="h-10 bg-gray-200 rounded w-1/3 mb-8"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i}>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
-                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                <div className="h-10 bg-gray-200 rounded"></div>
               </div>
             ))}
           </div>
-          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-32 bg-gray-200 rounded"></div>
           <div className="flex justify-end space-x-4">
-            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+            <div className="h-10 bg-gray-200 rounded w-24"></div>
+            <div className="h-10 bg-gray-200 rounded w-32"></div>
           </div>
         </div>
       </div>
@@ -234,9 +260,9 @@ const EditStaff = () => {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex items-center justify-center min-h-screen px-4 bg-gray-50 dark:bg-[#030712]"
+      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50"
     >
-      <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 text-red-700 dark:text-red-100 p-6 max-w-md w-full rounded-lg shadow-sm">
+      <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-6 max-w-md w-full rounded-lg shadow-sm">
         <div className="flex items-start">
           <FiAlertCircle className="w-6 h-6 mr-2 mt-0.5 flex-shrink-0" />
           <div>
@@ -245,13 +271,13 @@ const EditStaff = () => {
             <div className="mt-4 flex space-x-3">
               <button
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
               >
                 Try Again
               </button>
               <button
                 onClick={() => router.push('/mahi/staff/editStaff')}
-                className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded hover:bg-gray-600 dark:hover:bg-gray-700 transition"
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
               >
                 Back to List
               </button>
@@ -266,12 +292,12 @@ const EditStaff = () => {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex items-center justify-center min-h-screen px-4 bg-gray-50 dark:bg-[#030712]"
+      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50"
     >
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm text-center max-w-md w-full">
-        <FiAlertCircle className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
-        <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Staff Member Not Found</h3>
-        <p className="mt-1 text-gray-500 dark:text-gray-400">The staff member you're looking for doesn't exist.</p>
+      <div className="bg-white p-6 rounded-lg shadow-sm text-center max-w-md w-full">
+        <FiAlertCircle className="w-16 h-16 mx-auto text-gray-400" />
+        <h3 className="mt-4 text-lg font-medium text-gray-900">Staff Member Not Found</h3>
+        <p className="mt-1 text-gray-500">The staff member you're looking for doesn't exist.</p>
         <button
           onClick={() => router.push('/mahi/staff/editStaff')}
           className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -287,19 +313,22 @@ const EditStaff = () => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="min-h-screen bg-gray-50 dark:bg-[#030712]  md:pt-15 py-8 px-4 sm:px-6 transition-colors duration-300"
+      className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 py-8 px-4 sm:px-6 lg:px-8"
     >
       <div className="max-w-4xl mx-auto">
         <motion.header variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="flex items-center space-x-4">
             <button 
               onClick={() => router.push('/mahi/staff/editStaff')}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-full hover:bg-gray-200 transition-colors"
               aria-label="Back to staff list"
             >
-              <FiChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              <FiChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Edit Staff Member</h1>
+            <div>
+              <h1 className="text-3xl font-bold text-blue-600">Edit Staff Member</h1>
+              <p className="text-gray-600 mt-1">Update staff information</p>
+            </div>
           </div>
           <div className="flex space-x-3 w-full sm:w-auto">
             <button 
@@ -310,36 +339,21 @@ const EditStaff = () => {
               <FiTrash2 className="mr-2" />
               Delete
             </button>
-            <button 
-              onClick={toggleDarkMode}
-              className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                </svg>
-              )}
-            </button>
           </div>
         </motion.header>
 
         <motion.div 
           variants={itemVariants}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-colors duration-300 border border-gray-200 dark:border-gray-700"
+          className="bg-white rounded-xl shadow-lg overflow-hidden transition-colors duration-300 border border-gray-200"
         >
-          <form onSubmit={handleSubmit} className="p-6">
+          <form onSubmit={handleSubmit} className="p-6" ref={formRef}>
             <AnimatePresence>
               {success && (
                 <motion.div 
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 dark:border-green-400 text-green-700 dark:text-green-100 rounded"
+                  className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg"
                 >
                   <div className="flex items-center">
                     <FiCheckCircle className="w-5 h-5 mr-2" />
@@ -353,7 +367,7 @@ const EditStaff = () => {
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 text-red-700 dark:text-red-100 rounded"
+                  className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg"
                 >
                   <div className="flex items-center">
                     <FiAlertCircle className="w-5 h-5 mr-2" />
@@ -372,7 +386,7 @@ const EditStaff = () => {
                   id: 'Name',
                   label: 'Full Name *',
                   type: 'text',
-                  icon: <FiUser className="text-gray-400 dark:text-gray-500" />,
+                  icon: <FiUser className="text-gray-400" />,
                   required: true,
                   error: formErrors.Name
                 },
@@ -380,7 +394,7 @@ const EditStaff = () => {
                   id: 'StaffID',
                   label: 'Staff ID',
                   type: 'text',
-                  icon: <FiBriefcase className="text-gray-400 dark:text-gray-500" />,
+                  icon: <FiBriefcase className="text-gray-400" />,
                   readOnly: true,
                   disabled: true
                 },
@@ -388,7 +402,7 @@ const EditStaff = () => {
                   id: 'Designation',
                   label: 'Designation *',
                   type: 'text',
-                  icon: <FiBriefcase className="text-gray-400 dark:text-gray-500" />,
+                  icon: <FiBriefcase className="text-gray-400" />,
                   required: true,
                   error: formErrors.Designation
                 },
@@ -396,7 +410,7 @@ const EditStaff = () => {
                   id: 'DOB',
                   label: 'Date of Birth *',
                   type: 'date',
-                  icon: <FiCalendar className="text-gray-400 dark:text-gray-500" />,
+                  icon: <FiCalendar className="text-gray-400" />,
                   required: true,
                   error: formErrors.DOB
                 },
@@ -404,7 +418,7 @@ const EditStaff = () => {
                   id: 'JoinningData',
                   label: 'Joining Date *',
                   type: 'date',
-                  icon: <FiCalendar className="text-gray-400 dark:text-gray-500" />,
+                  icon: <FiCalendar className="text-gray-400" />,
                   required: true,
                   error: formErrors.JoinningData
                 },
@@ -412,13 +426,13 @@ const EditStaff = () => {
                   id: 'LeavingDate',
                   label: 'Leaving Date (if applicable)',
                   type: 'date',
-                  icon: <FiCalendar className="text-gray-400 dark:text-gray-500" />
+                  icon: <FiCalendar className="text-gray-400" />
                 },
                 {
                   id: 'FatherName',
                   label: 'Father\'s Name',
                   type: 'text',
-                  icon: <FiUser className="text-gray-400 dark:text-gray-500" />
+                  icon: <FiUser className="text-gray-400" />
                 }
               ].map((field, index) => (
                 <motion.div 
@@ -426,7 +440,7 @@ const EditStaff = () => {
                   variants={itemVariants}
                   className="space-y-1"
                 >
-                  <label htmlFor={field.id} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor={field.id} className="block text-sm font-medium text-gray-700">
                     {field.label}
                   </label>
                   <div className="relative">
@@ -442,25 +456,25 @@ const EditStaff = () => {
                       required={field.required}
                       readOnly={field.readOnly}
                       disabled={field.disabled}
-                      className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        field.error ? 'border-red-300 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-gray-600'
-                      } ${field.readOnly || field.disabled ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'}`}
+                      className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        field.error ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      } ${field.readOnly || field.disabled ? 'bg-gray-100 text-gray-500' : 'bg-white text-gray-900'}`}
                     />
                   </div>
                   {field.error && (
-                    <p className="text-sm text-red-600 dark:text-red-400">{field.error}</p>
+                    <p className="text-sm text-red-600">{field.error}</p>
                   )}
                 </motion.div>
               ))}
             </motion.div>
             
             <motion.div variants={itemVariants} className="mb-6 space-y-1">
-              <label htmlFor="Address" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="Address" className="block text-sm font-medium text-gray-700">
                 Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 pt-3 pointer-events-none">
-                  <FiHome className="text-gray-400 dark:text-gray-500" />
+                  <FiHome className="text-gray-400" />
                 </div>
                 <textarea
                   id="Address"
@@ -468,7 +482,7 @@ const EditStaff = () => {
                   value={formData.Address}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical bg-white text-gray-900"
                 />
               </div>
             </motion.div>
@@ -488,7 +502,7 @@ const EditStaff = () => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -515,23 +529,23 @@ const EditStaff = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-blur bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
           >
             <motion.div 
               variants={modalVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700"
+              className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 border border-gray-200"
             >
               <div className="flex items-start">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                  <FiAlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                  <FiAlertCircle className="h-6 w-6 text-red-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Delete Staff Member</h3>
+                  <h3 className="text-lg font-medium text-gray-900">Delete Staff Member</h3>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-gray-500">
                       Are you sure you want to delete {formData.Name}? This action cannot be undone.
                     </p>
                   </div>
@@ -539,7 +553,7 @@ const EditStaff = () => {
                     <button
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-md hover:bg-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center justify-center"
+                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center justify-center"
                       disabled={isSubmitting}
                     >
                       <FiX className="mr-2" />
@@ -548,7 +562,7 @@ const EditStaff = () => {
                     <button
                       type="button"
                       onClick={handleDelete}
-                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center justify-center"
+                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center justify-center"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? (
@@ -568,6 +582,22 @@ const EditStaff = () => {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Scroll to Top Button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            onClick={scrollToTop}
+            className="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition z-50"
+            aria-label="Scroll to top"
+          >
+            <FiArrowUp size={20} />
+          </motion.button>
         )}
       </AnimatePresence>
     </motion.div>

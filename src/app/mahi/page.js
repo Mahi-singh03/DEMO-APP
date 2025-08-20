@@ -174,20 +174,21 @@ const AdminDashboard = () => {
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/skillup/fees'
-    }, { 
+    },
+     { 
       id: 'Add Staff', 
       title: 'Add Staff', 
       icon: <IoPersonAdd className="text-4xl" />,
-      bgColor: 'bg-white',
+      bgColor: 'bg-blue-100',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/skillup/reports'
+      path: '/mahi/staff/addstaff'
     },
     { 
       id: 'edit staff', 
       title: 'Edit Staff', 
       icon: <FaChalkboardTeacher className="text-4xl" />,
-      bgColor: 'bg-white',
+      bgColor: 'bg-purple-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/mahi/staff/editStaff'
