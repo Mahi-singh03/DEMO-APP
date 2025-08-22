@@ -19,6 +19,7 @@ const Gallery = () => {
   const [showInfo, setShowInfo] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [rotation, setRotation] = useState(0);
+  const imageContainerRef = useRef(null);
   const imageRef = useRef(null);
 
   useEffect(() => {
@@ -250,22 +251,24 @@ const Gallery = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 sm:px-6 py-6 lg:px-8 transition-colors duration-300">
+    <div className="min-h-screen bg-[#eaf6fe] px-4  sm:px-6 py-10 lg:px-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex items-center justify-between w-full mb-8"
+          className="flex justify-center w-full mb-8"
         >
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Photo Gallery
-            </h1>
-            <p className="text-gray-600 mt-1">
-              {photos.length} {photos.length === 1 ? 'memory' : 'memories'} captured
-            </p>
-          </div>
+      
+                 <motion.h1 
+        className="text-center text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-10"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        Gallery
+      </motion.h1>
+      
         </motion.div>
 
         {photos.length === 0 ? (
@@ -334,10 +337,10 @@ const Gallery = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 20 }}
-              className="relative max-w-6xl w-full max-h-[90vh]"
+              className="relative max-w-6xl w-full max-h-[90vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="absolute top-0 left-0 right-0 flex justify-between items-center p-4 bg-white/90 backdrop-blur-sm rounded-t-lg z-20 border-b">
+              <div className="flex justify-between items-center p-4 bg-white/90 backdrop-blur-sm rounded-t-lg z-20 border-b">
                 <div className="text-gray-700 text-sm">
                   {selectedIndex + 1} of {photos.length} • {new Date(selectedImage.created_at).toLocaleDateString()}
                 </div>
@@ -427,7 +430,7 @@ const Gallery = () => {
                 )}
               </AnimatePresence>
               
-              <div className="relative w-full h-full flex items-center justify-center mt-16">
+              <div className="relative flex-1 flex items-center justify-center overflow-hidden mt-0">
                 <motion.button
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -444,7 +447,8 @@ const Gallery = () => {
                 </motion.button>
                 
                 <div 
-                  className="overflow-hidden max-w-full max-h-[70vh]"
+                  ref={imageContainerRef}
+                  className="flex items-center justify-center w-full h-full overflow-hidden"
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
@@ -453,20 +457,29 @@ const Gallery = () => {
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                   style={{ cursor: zoomLevel > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
-                  ref={imageRef}
                 >
-                  <Image
-                    src={selectedImage.url}
-                    alt={selectedImage.public_id || `Selected photo ${selectedIndex}`}
-                    width={selectedImage.width}
-                    height={selectedImage.height}
-                    className="object-contain transition-transform duration-200"
+                  <div 
+                    ref={imageRef}
+                    className="relative flex items-center justify-center"
                     style={{ 
-                      transform: `scale(${zoomLevel}) translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
-                      transformOrigin: 'center'
+                      transform: `translate(${position.x}px, ${position.y}px)`,
+                      transition: isDragging ? 'none' : 'transform 0.2s ease-out'
                     }}
-                    priority
-                  />
+                  >
+                    <Image
+                      src={selectedImage.url}
+                      alt={selectedImage.public_id || `Selected photo ${selectedIndex}`}
+                      width={selectedImage.width}
+                      height={selectedImage.height}
+                      className="object-contain transition-transform duration-200"
+                      style={{ 
+                        transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                        maxWidth: '80vw',
+                        maxHeight: '70vh'
+                      }}
+                      priority
+                    />
+                  </div>
                 </div>
                 
                 <motion.button
@@ -485,16 +498,11 @@ const Gallery = () => {
                 </motion.button>
               </div>
 
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mt-4 text-center text-gray-500 text-sm"
-              >
+              <div className="p-4 text-center text-gray-500 text-sm border-t bg-white/80">
                 Use mouse wheel to zoom • Click and drag when zoomed in • Swipe to navigate
                 <br />
                 Keyboard shortcuts: ← → arrows, +/- zoom, 0 reset, R rotate, I info, Esc close
-              </motion.div>
+              </div>
             </motion.div>
           </motion.div>
         )}
