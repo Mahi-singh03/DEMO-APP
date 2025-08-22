@@ -1,296 +1,526 @@
-"use client";
-import { useState, useEffect } from 'react';
-import Head from 'next/head';
+'use client';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import { 
+  FiX, FiChevronLeft, FiChevronRight, FiSun, FiMoon, 
+  FiZoomIn, FiZoomOut, FiDownload, FiInfo, FiRotateCw 
+} from 'react-icons/fi';
 
-export default function Gallery() {
-  const [images, setImages] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+const Gallery = () => {
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [showInfo, setShowInfo] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [rotation, setRotation] = useState(0);
+  const imageRef = useRef(null);
 
-  // Fetch images from Cloudinary
   useEffect(() => {
-    fetchImages();
+    const fetchPhotos = async () => {
+      try {
+        const response = await fetch('/api/gallery/getAllPhoto');
+        const data = await response.json();
+        if (data.success) {
+          setPhotos(data.photos);
+        } else {
+          setError('Failed to load photos');
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPhotos();
   }, []);
 
-  const fetchImages = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/photos');
-      const data = await response.json();
-      
-      if (response.ok) {
-        setImages(data.images || []);
-      } else {
-        setError(data.error || 'Failed to fetch images');
-      }
-    } catch (err) {
-      setError('Failed to fetch images');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const openImage = useCallback((photo, index) => {
+    setSelectedImage(photo);
+    setSelectedIndex(index);
+    setZoomLevel(1);
+    setPosition({ x: 0, y: 0 });
+    setRotation(0);
+    setShowInfo(false);
+  }, []);
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      setUploading(true);
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/gallery/getAllPhoto', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        // Refresh the gallery
-        await fetchImages();
-      } else {
-        setError('Failed to upload image');
-      }
-    } catch (err) {
-      setError('Failed to upload image');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleDeleteImage = async (publicId) => {
-    if (!confirm('Are you sure you want to delete this image?')) return;
-
-    try {
-      const response = await fetch('/api/photos', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ public_id: publicId }),
-      });
-
-      if (response.ok) {
-        // Remove the image from state
-        setImages(images.filter(img => img.publicId !== publicId));
-        if (selectedImage && selectedImage.publicId === publicId) {
-          setSelectedImage(null);
-        }
-      } else {
-        setError('Failed to delete image');
-      }
-    } catch (err) {
-      setError('Failed to delete image');
-    }
-  };
-
-  const navigateImage = (direction) => {
-    if (!selectedImage) return;
-    
-    const currentIndex = images.findIndex(img => img.publicId === selectedImage.publicId);
+  const navigateImage = useCallback((direction) => {
     let newIndex;
-    
-    if (direction === 'next') {
-      newIndex = (currentIndex + 1) % images.length;
+    if (direction === 'prev') {
+      newIndex = selectedIndex === 0 ? photos.length - 1 : selectedIndex - 1;
     } else {
-      newIndex = (currentIndex - 1 + images.length) % images.length;
+      newIndex = selectedIndex === photos.length - 1 ? 0 : selectedIndex + 1;
     }
-    
-    setSelectedImage(images[newIndex]);
-    setZoomLevel(1); // Reset zoom when navigating
-  };
+    setSelectedImage(photos[newIndex]);
+    setSelectedIndex(newIndex);
+    setZoomLevel(1);
+    setPosition({ x: 0, y: 0 });
+    setRotation(0);
+  }, [selectedIndex, photos]);
 
-  const handleKeyDown = (e) => {
+  const handleZoomIn = useCallback(() => {
+    setZoomLevel(prev => Math.min(prev + 0.5, 5));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoomLevel(prev => {
+      const newZoom = Math.max(prev - 0.5, 1);
+      if (newZoom === 1) {
+        setPosition({ x: 0, y: 0 });
+      }
+      return newZoom;
+    });
+  }, []);
+
+  const resetZoom = useCallback(() => {
+    setZoomLevel(1);
+    setPosition({ x: 0, y: 0 });
+  }, []);
+
+  const rotateImage = useCallback(() => {
+    setRotation(prev => (prev + 90) % 360);
+  }, []);
+
+  const handleWheel = useCallback((e) => {
+    if (selectedImage) {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        handleZoomIn();
+      } else {
+        handleZoomOut();
+      }
+    }
+  }, [selectedImage, handleZoomIn, handleZoomOut]);
+
+  const handleMouseDown = useCallback((e) => {
+    if (zoomLevel > 1) {
+      setIsDragging(true);
+    }
+  }, [zoomLevel]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (isDragging && zoomLevel > 1) {
+      setPosition(prev => ({
+        x: prev.x + e.movementX,
+        y: prev.y + e.movementY
+      }));
+    }
+  }, [isDragging, zoomLevel]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleTouchStart = useCallback((e) => {
+    if (e.touches.length === 1) {
+      setTouchStart({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      });
+    } else if (e.touches.length === 2) {
+      // Handle pinch-to-zoom
+      e.preventDefault();
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    if (e.touches.length === 1 && touchStart && zoomLevel === 1) {
+      const touchX = e.touches[0].clientX;
+      const deltaX = touchX - touchStart.x;
+      
+      if (Math.abs(deltaX) > 50) {
+        if (deltaX > 0) {
+          navigateImage('prev');
+        } else {
+          navigateImage('next');
+        }
+        setTouchStart(null);
+      }
+    }
+  }, [touchStart, zoomLevel, navigateImage]);
+
+  const handleTouchEnd = useCallback(() => {
+    setTouchStart(null);
+  }, []);
+
+  const downloadImage = useCallback(async () => {
     if (!selectedImage) return;
     
-    if (e.key === 'ArrowRight') {
-      navigateImage('next');
-    } else if (e.key === 'ArrowLeft') {
-      navigateImage('prev');
-    } else if (e.key === 'Escape') {
-      setSelectedImage(null);
-    } else if (e.key === '+') {
-      setZoomLevel(prev => Math.min(prev + 0.25, 3));
-    } else if (e.key === '-') {
-      setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
+    try {
+      const response = await fetch(selectedImage.url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = selectedImage.public_id || `photo-${selectedIndex}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download image:', err);
     }
-  };
+  }, [selectedImage, selectedIndex]);
 
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+    const handleKeyDown = (e) => {
+      if (selectedImage) {
+        if (e.key === 'Escape') {
+          setSelectedImage(null);
+        } else if (e.key === 'ArrowLeft') {
+          navigateImage('prev');
+        } else if (e.key === 'ArrowRight') {
+          navigateImage('next');
+        } else if (e.key === '+' || e.key === '=') {
+          handleZoomIn();
+        } else if (e.key === '-' || e.key === '_') {
+          handleZoomOut();
+        } else if (e.key === 'i') {
+          setShowInfo(prev => !prev);
+        } else if (e.key === '0') {
+          resetZoom();
+        } else if (e.key === 'r') {
+          rotateImage();
+        }
+      }
     };
-  }, [selectedImage]);
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage, navigateImage, handleZoomIn, handleZoomOut, resetZoom, rotateImage]);
+
+  useEffect(() => {
+    if (selectedImage && zoomLevel > 1) {
+      window.addEventListener('wheel', handleWheel, { passive: false });
+      return () => window.removeEventListener('wheel', handleWheel);
+    }
+  }, [selectedImage, zoomLevel, handleWheel]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white transition-colors duration-300">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mb-4"
+          />
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-gray-600"
+          >
+            Loading your memories...
+          </motion.p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white transition-colors duration-300">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 bg-red-100 text-red-700 rounded-lg shadow-lg max-w-md text-center"
+        >
+          <h2 className="text-xl font-bold mb-2">Oops! Something went wrong</h2>
+          <p>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+          >
+            Try Again
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <Head>
-        <title>Photo Gallery</title>
-        <meta name="description" content="Responsive photo gallery with Cloudinary integration" />
-      </Head>
-
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">Photo Gallery</h1>
-        
-        {/* Upload Section */}
-        <div className="mb-8 text-center">
-          <label className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105 inline-block">
-            {uploading ? 'Uploading...' : 'Upload Image'}
-            <input 
-              type="file" 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleImageUpload} 
-              disabled={uploading}
-            />
-          </label>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center">
-            {error}
-            <button 
-              className="ml-2 text-red-900 font-bold"
-              onClick={() => setError(null)}
-            >
-              ×
-            </button>
+    <div className="min-h-screen bg-white px-4 sm:px-6 py-6 lg:px-8 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-between w-full mb-8"
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Photo Gallery
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {photos.length} {photos.length === 1 ? 'memory' : 'memories'} captured
+            </p>
           </div>
-        )}
+        </motion.div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        )}
-
-        {/* Gallery Grid */}
-        {!isLoading && images.length === 0 && (
-          <div className="text-center text-gray-500 py-12">
-            <p className="text-xl">No images found. Upload some photos to get started!</p>
-          </div>
-        )}
-
-        {!isLoading && images.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map((image, index) => (
-              <div 
-                key={image.publicId}
-                className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
-                onClick={() => {
-                  setSelectedImage(image);
-                  setZoomLevel(1);
-                }}
-              >
-                <img 
-                  src={image.url} 
-                  alt={`Gallery image ${index + 1}`}
-                  className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
-                  <button 
-                    className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-red-500 hover:bg-red-600 p-1 rounded-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteImage(image.publicId);
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Lightbox Modal */}
-        {selectedImage && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedImage(null)}
+        {photos.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16 text-gray-500"
           >
-            <div className="relative max-w-5xl max-h-full w-full h-full flex items-center justify-center">
-              <button 
-                className="absolute top-4 right-4 text-white text-3xl z-10 bg-red-500 hover:bg-red-600 rounded-full w-10 h-10 flex items-center justify-center transition-all duration-300"
-                onClick={() => setSelectedImage(null)}
+            <FiInfo size={48} className="mx-auto mb-4 opacity-50" />
+            <h3 className="text-xl font-medium mb-2">No photos yet</h3>
+            <p>Upload some images to get started</p>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"
+          >
+            {photos.map((photo, index) => (
+              <motion.div
+                key={photo.public_id || index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.05 * index }}
+                whileHover={{ scale: 1.03, z: 10 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative aspect-square overflow-hidden rounded-xl shadow-md bg-gray-100 cursor-pointer group"
+                onClick={() => openImage(photo, index)}
               >
-                &times;
-              </button>
-              
-              <button 
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 z-10 transition-all duration-300"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateImage('prev');
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              <button 
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 z-10 transition-all duration-300"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateImage('next');
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-
-              {/* Zoom Controls */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-black bg-opacity-50 rounded-lg p-2 z-10">
-                <button 
-                  className="text-white p-1 rounded hover:bg-gray-700 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <span className="text-white px-2">{Math.round(zoomLevel * 100)}%</span>
-                <button 
-                  className="text-white p-1 rounded hover:bg-gray-700 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setZoomLevel(prev => Math.min(prev + 0.25, 3));
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                  </svg>
-                </button>
-              </div>
-
-              <div 
-                className="w-full h-full flex items-center justify-center overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <img 
-                  src={selectedImage.url} 
-                  alt="Selected"
-                  className="max-w-full max-h-full object-contain transition-transform duration-300"
-                  style={{ transform: `scale(${zoomLevel})` }}
+                <Image
+                  src={photo.url}
+                  alt={photo.public_id || `Photo ${index}`}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  placeholder="blur"
+                  blurDataURL={`data:image/svg+xml;base64,${toBase64(shimmer(700, 475))}`}
                 />
-              </div>
-            </div>
-          </div>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-end">
+                  <div className="p-3 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-full bg-gradient-to-t from-black/80 to-transparent">
+                    <p className="text-sm truncate">{photo.public_id}</p>
+                    <p className="text-xs opacity-80">
+                      {new Date(photo.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
         )}
       </div>
+
+      <AnimatePresence mode="wait">
+        {selectedImage && (
+          <motion.div
+            key="modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-white/95 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 20 }}
+              className="relative max-w-6xl w-full max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute top-0 left-0 right-0 flex justify-between items-center p-4 bg-white/90 backdrop-blur-sm rounded-t-lg z-20 border-b">
+                <div className="text-gray-700 text-sm">
+                  {selectedIndex + 1} of {photos.length} • {new Date(selectedImage.created_at).toLocaleDateString()}
+                </div>
+                <div className="flex items-center gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowInfo(prev => !prev)}
+                    className={`p-2 rounded-full ${showInfo ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                    aria-label="Toggle info"
+                  >
+                    <FiInfo size={18} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={rotateImage}
+                    className="p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    aria-label="Rotate image"
+                  >
+                    <FiRotateCw size={18} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={downloadImage}
+                    className="p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    aria-label="Download image"
+                  >
+                    <FiDownload size={18} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={resetZoom}
+                    disabled={zoomLevel === 1}
+                    className={`p-2 rounded-full ${zoomLevel === 1 ? 'bg-gray-100 text-gray-400' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                    aria-label="Reset zoom"
+                  >
+                    1:1
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleZoomOut}
+                    disabled={zoomLevel <= 1}
+                    className={`p-2 rounded-full ${zoomLevel <= 1 ? 'bg-gray-100 text-gray-400' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                    aria-label="Zoom out"
+                  >
+                    <FiZoomOut size={18} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleZoomIn}
+                    disabled={zoomLevel >= 5}
+                    className={`p-2 rounded-full ${zoomLevel >= 5 ? 'bg-gray-100 text-gray-400' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                    aria-label="Zoom in"
+                  >
+                    <FiZoomIn size={18} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                    onClick={() => setSelectedImage(null)}
+                    aria-label="Close"
+                  >
+                    <FiX size={20} />
+                  </motion.button>
+                </div>
+              </div>
+              
+              <AnimatePresence>
+                {showInfo && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-16 left-4 bg-white/90 backdrop-blur-sm text-gray-700 p-4 rounded-lg z-20 max-w-xs text-sm shadow-lg border"
+                  >
+                    <h4 className="font-medium mb-2">Image Information</h4>
+                    <p>Filename: {selectedImage.public_id}</p>
+                    <p>Uploaded: {new Date(selectedImage.created_at).toLocaleDateString()}</p>
+                    <p>Dimensions: {selectedImage.width} × {selectedImage.height}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              <div className="relative w-full h-full flex items-center justify-center mt-16">
+                <motion.button
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateImage('prev');
+                  }}
+                  className="absolute left-4 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full z-10 transition-colors shadow-lg border"
+                  aria-label="Previous image"
+                >
+                  <FiChevronLeft size={28} />
+                </motion.button>
+                
+                <div 
+                  className="overflow-hidden max-w-full max-h-[70vh]"
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  style={{ cursor: zoomLevel > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+                  ref={imageRef}
+                >
+                  <Image
+                    src={selectedImage.url}
+                    alt={selectedImage.public_id || `Selected photo ${selectedIndex}`}
+                    width={selectedImage.width}
+                    height={selectedImage.height}
+                    className="object-contain transition-transform duration-200"
+                    style={{ 
+                      transform: `scale(${zoomLevel}) translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
+                      transformOrigin: 'center'
+                    }}
+                    priority
+                  />
+                </div>
+                
+                <motion.button
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateImage('next');
+                  }}
+                  className="absolute right-4 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full z-10 transition-colors shadow-lg border"
+                  aria-label="Next image"
+                >
+                  <FiChevronRight size={28} />
+                </motion.button>
+              </div>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mt-4 text-center text-gray-500 text-sm"
+              >
+                Use mouse wheel to zoom • Click and drag when zoomed in • Swipe to navigate
+                <br />
+                Keyboard shortcuts: ← → arrows, +/- zoom, 0 reset, R rotate, I info, Esc close
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-}
+};
+
+// Shimmer effect for image placeholders
+const shimmer = (w, h) => `
+<svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/1999/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="g">
+      <stop stop-color="#f3f3f3" offset="20%" />
+      <stop stop-color="#ecebeb" offset="50%" />
+      <stop stop-color="#f3f3f3" offset="70%" />
+    </linearGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="#f3f3f3" />
+  <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
+  <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
+</svg>`;
+
+const toBase64 = (str) =>
+  typeof window === 'undefined'
+    ? Buffer.from(str).toString('base64')
+    : window.btoa(str);
+
+export default Gallery;

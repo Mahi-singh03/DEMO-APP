@@ -1,5 +1,6 @@
 import  connectToDatabase  from '@/lib/DBconnection'; 
 import Staff from '@/models/staff';
+import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {

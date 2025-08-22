@@ -53,7 +53,7 @@ export async function POST(request) {
           percentage: student.percentage,
           phoneNumber: student.phoneNumber,
           finalGrade: student.finalGrade,
-          certificateStatus: student.certificate,
+          certificate: student.certificate,
         },
       },
       { status: 200 }

@@ -35,11 +35,14 @@ export async function GET() {
 
     const images = result.resources.map(file => ({
       url: file.secure_url,
-      publicId: file.public_id,
+      public_id: file.public_id, // match frontend usage
+      created_at: file.created_at, // add created_at for display
+      width: file.width,
+      height: file.height,
       context: file.context || null,
     }));
 
-    return NextResponse.json({ images });
+    return NextResponse.json({ success: true, photos: images });
   } catch (error) {
     console.error('Cloudinary fetch error:', error);
     return NextResponse.json(

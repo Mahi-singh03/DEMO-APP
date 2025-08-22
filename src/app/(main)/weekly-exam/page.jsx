@@ -38,7 +38,7 @@ export default function ExamList() {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        router.push("/student-login");
+        router.push("/login");
         return;
       }
 
@@ -57,18 +57,18 @@ export default function ExamList() {
           console.warn("Verification failed:", data?.message);
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-          router.push("/student-login");
+          router.push("/login");
         }
       } catch (error) {
         console.error("Error verifying token:", error);
-        router.push("/student-login");
+        router.push("/login");
       }
     };
 
     if (!loading && isAuthenticated) {
       checkToken();
     } else if (!loading && !isAuthenticated) {
-      router.push("/student-login");
+      router.push("/login");
     }
   }, [loading, isAuthenticated, router]);
 
