@@ -1,4 +1,4 @@
-import { connectToDatabase } from '@/lib/DBconnection'; 
+import  connectToDatabase  from '@/lib/DBconnection'; 
 import Staff from '@/models/staff';
 
 export async function POST(request) {

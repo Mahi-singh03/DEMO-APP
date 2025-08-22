@@ -1,4 +1,4 @@
-import { connectToDatabase } from '@/lib/DBconnection'; 
+import  connectToDatabase  from '@/lib/DBconnection'; 
 import registered_students from '@/models/students'; 
 import { NextResponse } from 'next/server';
 

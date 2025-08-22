@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import ScrollToTop from "@/app/components/scrollToTop";
 import { UserProvider } from "@/app/components/userContext"; 
 import ProtectedAdminRoute from "@/app/components/protectedAdminRoute"; 
+import Navbar from "../components/navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +28,8 @@ export default function RootLayout({ children }) {
         <UserProvider>
           <ProtectedAdminRoute>
             <ScrollToTop />
-                  <main >{children}</main>
+            <Navbar />
+                   <main className="pt-20 md:pt-[135px]">{children}</main>
           </ProtectedAdminRoute>
         </UserProvider>
       </body>

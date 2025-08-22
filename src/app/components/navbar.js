@@ -104,15 +104,15 @@ const Navbar = () => {
       <div className="container mx-auto flex justify-between items-center p-4">
         <Link href="/" className="flex items-center">
           <Image
-            src="/FINAL_lg_LOGO.svg"
+            src="/logoLG.svg"
             alt="Large Logo"
             width={48}
             height={48}
-            className="hidden lg:block object-contain w-auto h-12"
+            className="hidden lg:block object-contain w-auto h-14 "
             priority
           />
           <Image
-            src="/FINAL_sm_logo.svg"
+            src="/logo.svg"
             alt="Small Logo"
             width={48}
             height={48}
