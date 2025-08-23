@@ -144,7 +144,7 @@ const StudentLoginForm = () => {
 
       localStorage.setItem('onlineCourseUser', JSON.stringify(data.user));
       localStorage.setItem('onlineCourseUserToken', data.token);
-      router.push('/vidos');
+      router.push('/onlineCourse/videos');
     } catch (error) {
       console.error('Login error:', error);
       setErrors({
