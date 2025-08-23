@@ -159,12 +159,12 @@ const AdminDashboard = () => {
     },
     { 
       id: 'edit-courses', 
-      title: 'Edit Online Courses', 
+      title: 'Edit Online Courses students', 
       icon: <FaVideo className="text-4xl" />,
       bgColor: 'bg-white',
       hoverBgColor: 'bg-green-50',
       textColor: 'text-blue-800',
-      path: '/skillup/edit-courses'
+      path: '/mahi/onlineCourseStudents'
     },
     { 
       id: 'student-fees', 
