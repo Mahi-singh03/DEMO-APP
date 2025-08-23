@@ -161,7 +161,7 @@ const AdminDashboard = () => {
       id: 'edit-courses', 
       title: 'Edit Online Courses students', 
       icon: <FaVideo className="text-4xl" />,
-      bgColor: 'bg-white',
+      bgColor: 'bg-purple-200',
       hoverBgColor: 'bg-green-50',
       textColor: 'text-blue-800',
       path: '/mahi/onlineCourseStudents'
