@@ -32,8 +32,7 @@ const dropdowns = [
   {
     name: "Resources",
     options: [
-      { name: "Syllabus", path: "/Resources/Syllabus" },
-      { name: "Study Material", path: "/Resources/Study-Material" },
+      { name: "Study Material", path: "/resources" },
     ],
   },
   {
