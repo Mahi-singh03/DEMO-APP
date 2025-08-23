@@ -12,7 +12,7 @@ const dropdowns = [
   {
     name: "Online Courses",
     options: [
-      { name: "Register", path: "/OnlineCourse/Register" },
+      { name: "Register", path: "/onlineCourse/register" },
       { name: "Course Videos", path: "/OnlineCourse/Course-Videos" },
     ],
   },

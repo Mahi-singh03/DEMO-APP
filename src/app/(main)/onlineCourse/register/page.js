@@ -1,0 +1,334 @@
+"use client"
+import React, { useState, useEffect } from 'react';
+
+
+const RegistrationForm = () => {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    fatherName: '',
+    phoneNumber: '',
+    email: '',
+    courseSelected: '',
+  });
+  const [error, setError] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
+  const [successData, setSuccessData] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // VN Courses as requested
+  const courses = [
+    'VN Foundation Course',
+    'course 2',
+    'course 3',   
+    'course 4',
+    'course 5',
+  ];
+
+  useEffect(() => {
+    // Add some interactive animations on component mount
+    document.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('focus', () => {
+        el.parentElement.classList.add('animate__pulse');
+        setTimeout(() => {
+          el.parentElement.classList.remove('animate__pulse');
+        }, 1000);
+      });
+    });
+
+    return () => {
+      document.querySelectorAll('input, select').forEach(el => {
+        el.removeEventListener('focus', () => {});
+      });
+    };
+  }, []);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
+    
+    // Add animation to the active field
+    e.target.parentElement.classList.add('animate__pulse');
+    setTimeout(() => {
+      e.target.parentElement.classList.remove('animate__pulse');
+    }, 500);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const { fullName, fatherName, phoneNumber, email, courseSelected } = formData;
+
+    if (!fullName || !fatherName || !phoneNumber || !email || !courseSelected) {
+      setError('All fields are required');
+      document.getElementById('error-message').classList.add('animate__shakeX');
+      setTimeout(() => {
+        document.getElementById('error-message').classList.remove('animate__shakeX');
+      }, 1000);
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      document.getElementById('error-message').classList.add('animate__shakeX');
+      setTimeout(() => {
+        document.getElementById('error-message').classList.remove('animate__shakeX');
+      }, 1000);
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch('/api/onlineCourse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Registration failed');
+      }
+
+      setSuccessData(result.data);
+      setShowPopup(true);
+      setFormData({
+        fullName: '',
+        fatherName: '',
+        phoneNumber: '',
+        email: '',
+        courseSelected: '',
+      });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setSuccessData(null);
+  };
+
+  const generateWhatsAppLink = () => {
+    if (!successData) return '';
+    const message = `Hello, I am ${successData.fullName}. I have registered for the ${successData.courseSelected} course. Please provide payment details and my password.`;
+    const phoneNumber = '+919781278770'; // Replace with your WhatsApp number
+    return `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
+      <div className="relative max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden animate__animated animate__fadeInDown">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+        
+        <div className="p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Online Course Registration
+            </h2>
+            <p className="text-gray-600 mt-2">Contact +91 ****** if Registration is completed</p>
+          </div>
+          
+          {error && (
+            <div id="error-message" className="mb-6 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200 animate__animated">
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {error}
+              </div>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="animate__animated animate__fadeInLeft animate__faster">
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  name="fullName"
+                  id="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  className="pl-10 mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter your full name"
+                />
+              </div>
+            </div>
+            
+            <div className="animate__animated animate__fadeInRight animate__faster">
+              <label htmlFor="fatherName" className="block text-sm font-medium text-gray-700 mb-1">
+                Father's Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  name="fatherName"
+                  id="fatherName"
+                  value={formData.fatherName}
+                  onChange={handleChange}
+                  className="pl-10 mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter your father's name"
+                />
+              </div>
+            </div>
+            
+            <div className="animate__animated animate__fadeInLeft animate__faster">
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  id="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  className="pl-10 mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter your phone number"
+                />
+              </div>
+            </div>
+            
+            <div className="animate__animated animate__fadeInRight animate__faster">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="pl-10 mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter your email"
+                />
+              </div>
+            </div>
+            
+            <div className="animate__animated animate__fadeInLeft animate__faster">
+              <label htmlFor="courseSelected" className="block text-sm font-medium text-gray-700 mb-1">
+                Select VN Course
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <select
+                  name="courseSelected"
+                  id="courseSelected"
+                  value={formData.courseSelected}
+                  onChange={handleChange}
+                  className="pl-10 mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 appearance-none"
+                >
+                  <option value="" disabled>Select a VN course</option>
+                  {courses.map((course) => (
+                    <option key={course} value={course}>
+                      {course}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full py-3 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition duration-300 transform hover:scale-105 ${
+                isSubmitting 
+                  ? 'bg-blue-400 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white focus:ring-blue-500'
+              }`}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </div>
+              ) : (
+                <span className="font-medium">Register Now</span>
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-blur bg-opacity-50 backdrop-blur-sm z-50 p-4 animate__animated animate__fadeIn">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate__animated animate__zoomIn">
+            <div className="text-center mb-4">
+              <div className="mx-auto flex items-center justify-center h-26 w-26 rounded-full bg-green-100">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            
+            <h3 className="text-xl font-bold text-gray-800 text-center mb-2">Registration Successful!</h3>
+            <p className="text-gray-600 text-center mb-6">
+              To complete your enrollment and get access to the VN course materials, please contact us on WhatsApp for payment details and your password.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a
+                href={generateWhatsAppLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 transition duration-300"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.864 3.49"/>
+                </svg>
+                Contact via WhatsApp
+              </a>
+              <button
+                onClick={handleClosePopup}
+                className="flex-1 bg-gray-100 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-200 transition duration-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default RegistrationForm;
