@@ -7,7 +7,7 @@ const StudentLoginForm = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    emailAddress: '',
+    email: '',
     password: '',
   });
   const [errors, setErrors] = useState({});
@@ -17,6 +17,7 @@ const StudentLoginForm = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
+      // Verify token with your API
       fetch('/api/auth/verify', {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -54,7 +55,7 @@ const StudentLoginForm = () => {
 
   const validateField = (name, value) => {
     switch (name) {
-      case 'emailAddress':
+      case 'email':
         if (!value) return 'Email is required';
         return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value)
           ? ''
@@ -73,7 +74,7 @@ const StudentLoginForm = () => {
     const newErrors = {};
     let isValid = true;
 
-    ['emailAddress', 'password'].forEach((field) => {
+    ['email', 'password'].forEach((field) => {
       const error = validateField(field, formData[field]);
       if (error) {
         newErrors[field] = error;
@@ -86,21 +87,16 @@ const StudentLoginForm = () => {
   };
 
   const getFriendlyErrorMessage = (error) => {
-    // Handle API error messages
     if (error.includes('Invalid email') || error.includes('Invalid password')) {
       return 'The email or password you entered is incorrect. Please try again.';
     }
     if (error.includes('Email and password are required')) {
       return 'Please enter both your email and password.';
     }
-    if (error.includes('rate limit')) {
-      return 'Too many login attempts. Please wait a moment and try again.';
-    }
-    if (error.includes('Server configuration error')) {
+    if (error.includes('Server error')) {
       return 'We\'re experiencing technical difficulties. Please try again later.';
     }
     
-    // Default message for unexpected errors
     return 'Something went wrong. Please try again.';
   };
 
@@ -119,13 +115,13 @@ const StudentLoginForm = () => {
     }
 
     try {
-      const response = await fetch('/api/auth/login', {
+  const response = await fetch('/api/onlineCourse/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          emailAddress: formData.emailAddress.toLowerCase(),
+          email: formData.email.toLowerCase(),
           password: formData.password,
         }),
       });
@@ -134,23 +130,21 @@ const StudentLoginForm = () => {
 
       if (!response.ok) {
         let errorMessage = 'Login failed';
-        if (data.error) {
-          errorMessage = getFriendlyErrorMessage(data.error);
+        if (data.message) {
+          errorMessage = getFriendlyErrorMessage(data.message);
         } else if (response.status === 401) {
           errorMessage = 'The email or password you entered is incorrect.';
         } else if (response.status === 400) {
           errorMessage = 'Please enter both your email and password.';
-        } else if (response.status === 429) {
-          errorMessage = 'Too many login attempts. Please wait a moment.';
         }
         
         setErrors({ general: errorMessage });
         return;
       }
 
-      localStorage.setItem('user', JSON.stringify(data.student));
-      localStorage.setItem('token', data.token);
-      router.push('/profile');
+      localStorage.setItem('onlineCourseUser', JSON.stringify(data.user));
+      localStorage.setItem('onlineCourseUserToken', data.token);
+      router.push('/vidos');
     } catch (error) {
       console.error('Login error:', error);
       setErrors({
@@ -165,7 +159,7 @@ const StudentLoginForm = () => {
     <div className="min-h-screen bg-[#e3f1f1] flex justify-center p-7">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-center text-4xl sm:text-5xl font-bold text-[#1e90ff]">Student Login</h1>
+          <h1 className="text-center text-4xl sm:text-5xl font-bold text-[#1e90ff]">Course Login</h1>
         </div>
 
         {errors.general && (
@@ -192,7 +186,7 @@ const StudentLoginForm = () => {
           <div className="p-8">
             <form onSubmit={onSubmit} className="space-y-6">
               <div>
-                <label htmlFor="emailAddress" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address
                 </label>
                 <div className="relative">
@@ -208,18 +202,18 @@ const StudentLoginForm = () => {
                     </svg>
                   </div>
                   <input
-                    id="emailAddress"
+                    id="email"
                     type="email"
-                    name="emailAddress"
-                    value={formData.emailAddress}
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    className={`block w-full pl-10 pr-3 py-3 rounded-lg border ${errors.emailAddress ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'} placeholder-gray-400 focus:outline-none transition duration-150 ease-in-out`}
+                    className={`block w-full pl-10 pr-3 py-3 rounded-lg border ${errors.email ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'} placeholder-gray-400 focus:outline-none transition duration-150 ease-in-out`}
                     placeholder="you@example.com"
                   />
                 </div>
-                {errors.emailAddress && touched.emailAddress && (
-                  <p className="mt-1 text-sm text-red-600">{errors.emailAddress}</p>
+                {errors.email && touched.email && (
+                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
 
@@ -295,6 +289,14 @@ const StudentLoginForm = () => {
                 {errors.password && touched.password && (
                   <p className="mt-1 text-sm text-red-600">{errors.password}</p>
                 )}
+                <div className="mt-2 flex justify-end">
+                  <a
+                    href="/forgot-password"
+                    className="text-sm text-blue-600 hover:text-blue-500"
+                  >
+                    Forgot password?
+                  </a>
+                </div>
               </div>
 
               <div>

@@ -9,6 +9,7 @@ const CourseRegistrationSchema = new Schema({
   courseSelected: { type: String, required: true },
   password: { type: String },
   registrationTimestamp: { type: Date, default: Date.now },
+  role: { type: String, default: 'online-course-student' },
 });
 
 module.exports = mongoose.models.CourseRegistration || 

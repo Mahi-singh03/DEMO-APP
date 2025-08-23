@@ -13,6 +13,7 @@ const dropdowns = [
     name: "Online Courses",
     options: [
       { name: "Register", path: "/onlineCourse/register" },
+      { name: "Login", path: "/onlineCourse/login" },
       { name: "Course Videos", path: "/OnlineCourse/Course-Videos" },
     ],
   },
@@ -51,7 +52,7 @@ const secondaryMenuItems = (isAuthenticated) => [
     ? []
     : [
         { name: "Register", path: "/register" },
-        { name: "Login", path: "/student-login" },
+        { name: "Login", path: "/login" },
       ]),
   { name: "About", path: "/about" },
   { name: "Gallery", path: "/gallery" },

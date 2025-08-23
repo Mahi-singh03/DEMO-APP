@@ -24,6 +24,7 @@ export async function POST(request) {
       phoneNumber,
       email,
       courseSelected,
+      role: 'online-course-student',
     });
     const savedRegistration = await registration.save();
 
@@ -37,6 +38,7 @@ export async function POST(request) {
           email: savedRegistration.email,
           courseSelected: savedRegistration.courseSelected,
           registrationTimestamp: savedRegistration.registrationTimestamp,
+          role: savedRegistration.role,
         },
       }),
       {

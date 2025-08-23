@@ -80,7 +80,7 @@ const RegistrationForm = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/onlineCourse', {
+      const response = await fetch('/api/onlineCourse/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
