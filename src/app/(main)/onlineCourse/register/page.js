@@ -17,7 +17,7 @@ const RegistrationForm = () => {
 
   // VN Courses as requested
   const courses = [
-    'VN Foundation Course',
+    'Select the Course',
     'course 2',
     'course 3',   
     'course 4',
@@ -120,7 +120,7 @@ const RegistrationForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#e3f1f1] p-4">
       <div className="relative max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden animate__animated animate__fadeInDown">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
         
