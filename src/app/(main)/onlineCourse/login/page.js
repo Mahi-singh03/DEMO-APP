@@ -289,14 +289,6 @@ const StudentLoginForm = () => {
                 {errors.password && touched.password && (
                   <p className="mt-1 text-sm text-red-600">{errors.password}</p>
                 )}
-                <div className="mt-2 flex justify-end">
-                  <a
-                    href="/forgot-password"
-                    className="text-sm text-blue-600 hover:text-blue-500"
-                  >
-                    Forgot password?
-                  </a>
-                </div>
               </div>
 
               <div>
