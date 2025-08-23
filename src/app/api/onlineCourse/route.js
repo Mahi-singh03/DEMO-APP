@@ -5,10 +5,7 @@ import CourseRegistration from '@/models/OnlineCourseRegistration';
 export async function POST(request) {
   try {
     if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
+      await mongoose.connect(process.env.MONGO_URI);
     }
 
     const body = await request.json();
@@ -48,6 +45,7 @@ export async function POST(request) {
       }
     );
   } catch (error) {
+    console.error('Registration API error:', error);
     if (error.code === 11000) {
       return new Response(JSON.stringify({ error: 'Email already registered' }), {
         status: 400,
