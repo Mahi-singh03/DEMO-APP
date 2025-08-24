@@ -14,13 +14,13 @@ export default function Home() {
 
   // Configuration for course image dimensions (in pixels)
   const enrolledCourseImageConfig = {
-    width: 350,
-    height: 200
+    width: 150,
+    height: 300
   };
   
   const otherCoursesImageConfig = {
     width: 300,
-    height: 140
+    height: 240
   };
 
   // Sample course data

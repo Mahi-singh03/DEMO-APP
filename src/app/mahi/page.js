@@ -17,6 +17,7 @@ import {
   FaBook, FaVideo, FaTrophy, 
 } from 'react-icons/fa';
 import { IoPersonAdd } from "react-icons/io5";
+import { BsFillPersonLinesFill } from "react-icons/bs";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -167,19 +168,19 @@ const AdminDashboard = () => {
       path: '/mahi/onlineCourseStudents'
     },
     { 
-      id: 'student-fees', 
-      title: 'Student Fees', 
-      icon: <FaMoneyBillWave className="text-4xl" />,
-      bgColor: 'bg-white',
+      id: 'edit-online-course', 
+      title: 'Edit Online Course', 
+      icon: <BsFillPersonLinesFill className="text-4xl" />,
+      bgColor: 'bg-yellow-100',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/skillup/fees'
+      path: '/mahi/onlineCourse'
     },
      { 
       id: 'Add Staff', 
       title: 'Add Staff', 
       icon: <IoPersonAdd className="text-4xl" />,
-      bgColor: 'bg-blue-100',
+      bgColor: 'bg-blue-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/mahi/staff/addstaff'

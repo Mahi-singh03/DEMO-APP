@@ -24,7 +24,7 @@ const StudentManager = () => {
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/admin/onlineCourse');
+      const response = await fetch('/api/admin/onlineCourse/student/update');
       const data = await response.json();
       if (data.success) {
         setStudents(data.data);
@@ -76,7 +76,7 @@ const StudentManager = () => {
     e.preventDefault();
     
     try {
-      const response = await fetch(`/api/admin/onlineCourse/${id}`, {
+      const response = await fetch(`/api/admin/onlineCourse/student/update/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ const StudentManager = () => {
     }
     
     try {
-      const response = await fetch(`/api/admin/onlineCourse/${id}`, {
+      const response = await fetch(`/api/admin/onlineCourse/student/update/${id}`, {
         method: 'DELETE',
       });
       

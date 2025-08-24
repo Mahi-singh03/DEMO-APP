@@ -351,7 +351,7 @@ const RegistrationForm = () => {
       </div>
 
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center bg-blur bg-opacity-50 backdrop-blur-sm z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fadeIn">
             <div className="text-center mb-4">
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
