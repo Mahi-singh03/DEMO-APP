@@ -47,6 +47,7 @@ export async function POST(req) {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
+        courseName :user.courseSelected
       },
     }, { status: 200 });
   } catch (error) {
