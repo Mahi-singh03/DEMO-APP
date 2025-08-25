@@ -36,7 +36,7 @@ export default function Home() {
     },
     {
       id: "course 2",
-      coursePhoto: "https://res.cloudinary.com/dyigmfiar/image/upload/v1756112589/Screenshot_2025-08-25_143245_i4mbff.png",
+      coursePhoto: "https://res.cloudinary.com/dyigmfiar/image/upload/v1756114031/Screenshot_2025-08-25_143245_uoofbp.png",
       courseName: "AI and ChatGPT",
       duration: "14 weeks",
       description: "Discover how AI and ChatGPT work and how to use them effectively.Boost productivity, creativity, and problem-solving with smart tools.",
@@ -116,7 +116,7 @@ export default function Home() {
   const handleCourseClick = (course) => {
     // Check if user is enrolled in this course by courseName
     if (userData && userData.courseName === course.courseName) {
-      router.push(`/onlineCourse/course/${encodeURIComponent(course.courseName)}`);
+      router.push(`/onlineCourse/videos/${encodeURIComponent(course.courseName)}`);
     } else {
       setLockedCourse(course);
       setShowPopup(true);
@@ -151,7 +151,7 @@ Please provide me with enrollment details.`;
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: '#f5f7fa',
         transition: 'all 0.3s ease'
       }}>
         <div style={{ 
@@ -162,7 +162,7 @@ Please provide me with enrollment details.`;
           <div style={{ 
             width: '50px', 
             height: '50px', 
-            border: '5px solid rgba(255,255,255,0.3)', 
+            border: '5px solid #48bb78', 
             borderTop: '5px solid white', 
             borderRadius: '50%', 
             animation: 'spin 1s linear infinite',
@@ -406,7 +406,7 @@ Please provide me with enrollment details.`;
                 </p>
                 
                 <button
-                  onClick={() => router.push(`/onlineCourse/course/${encodeURIComponent(enrolledCourse.courseName)}`)}
+                  onClick={() => router.push(`/onlineCourse/videos/${encodeURIComponent(enrolledCourse.courseName)}`)}
                   style={{
                     padding: '0.6rem 1.2rem',
                     backgroundColor: '#667eea',
