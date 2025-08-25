@@ -14,8 +14,8 @@ export default function Home() {
 
   // Configuration for course image dimensions (in pixels)
   const enrolledCourseImageConfig = {
-    width: 150,
-    height: 300
+    width: 100,
+    height: 500
   };
   
   const otherCoursesImageConfig = {
@@ -26,38 +26,44 @@ export default function Home() {
   // Sample course data
   const sampleCourses = [
     {
+
       id: "course 1",
-      name: "Introduction to Web Development",
-      duration: "8 weeks",
-      description: "Learn the fundamentals of HTML, CSS, and JavaScript to build modern websites.",
+      coursePhoto: "https://res.cloudinary.com/dyigmfiar/image/upload/v1756112814/VN-Video-Editor-1-1-e1621523447781-Picsart-AiImageEnhancer_ogwpnu.png",
+      courseName: "VN video editing",
+      duration: "14 weeks",
+      description: "Learn how to edit videos professionally using VN, from trimming clips to adding effects.Perfect for beginners who want to create engaging content with ease..",
       totalChapters: 12
     },
     {
       id: "course 2",
-      name: "Data Science Fundamentals",
-      duration: "10 weeks",
-      description: "Master the basics of data analysis, visualization, and statistical modeling.",
+      coursePhoto: "https://res.cloudinary.com/dyigmfiar/image/upload/v1756112589/Screenshot_2025-08-25_143245_i4mbff.png",
+      courseName: "AI and ChatGPT",
+      duration: "14 weeks",
+      description: "Discover how AI and ChatGPT work and how to use them effectively.Boost productivity, creativity, and problem-solving with smart tools.",
       totalChapters: 15
     },
     {
       id: "course 3",
-      name: "Advanced React Patterns",
-      duration: "6 weeks",
-      description: "Dive deep into advanced React concepts and best practices for scalable applications.",
+      coursePhoto: "https://res.cloudinary.com/dyigmfiar/image/upload/v1756111970/ExcelImg_sutzbk.jpg",
+      courseName: "MS Excel Course",
+      duration: "14 weeks",
+      description: "Master Excel basics to advanced functions for data management and analysis.Gain skills that are essential for work, study, and business.",
       totalChapters: 8
     },
     {
       id: "course 4",
-      name: "UX/UI Design Principles",
-      duration: "7 weeks",
-      description: "Learn to create intuitive and beautiful user interfaces with modern design tools.",
+      coursePhoto: "https://res.cloudinary.com/dyigmfiar/image/upload/v1756111971/Canva-Business-Model_u0zbt8.png",
+      courseName: "Canva Course",
+      duration: "14 weeks",
+      description: "Create stunning graphics, presentations, and social media posts with Canva.Learn design principles without needing advanced graphic design skills.",
       totalChapters: 10
     },
     {
       id: "course 5",
-      name: "Digital Marketing Mastery",
-      duration: "9 weeks",
-      description: "Learn SEO, social media marketing, and conversion optimization strategies.",
+      coursePhoto: "https://res.cloudinary.com/dyigmfiar/image/upload/v1756112019/apps.29405.13510798885101997.34f5ec74-0607-4c99-bca6-0b5dbce6deb4_pkej0k.jpg",
+      courseName: "HTML Course",
+      duration: "14 weeks",
+      description: "Build the foundation of web development with HTML.Learn to structure websites and create clean, functional pages.",
       totalChapters: 14
     }
   ];
@@ -108,9 +114,9 @@ export default function Home() {
   };
 
   const handleCourseClick = (course) => {
-    // Check if user is enrolled in this course
-    if (userData && userData.courseName === course.id) {
-      router.push(`/onlineCourse/course/${course.id}`);
+    // Check if user is enrolled in this course by courseName
+    if (userData && userData.courseName === course.courseName) {
+      router.push(`/onlineCourse/course/${encodeURIComponent(course.courseName)}`);
     } else {
       setLockedCourse(course);
       setShowPopup(true);
@@ -125,7 +131,7 @@ export default function Home() {
   const handleWhatsAppClick = () => {
     if (!userData || !lockedCourse) return;
     
-    const message = `Hello, I would like to enroll in the ${lockedCourse.name} course. 
+    const message = `Hello, I would like to enroll in the ${lockedCourse} course. 
     
 My Details:
 Name: ${userData.fullName}
@@ -169,8 +175,12 @@ Please provide me with enrollment details.`;
   }
 
   // Separate enrolled course from other courses
-  const enrolledCourse = userData ? courses.find(course => course.id === userData.courseName) : null;
-  const otherCourses = userData ? courses.filter(course => course.id !== userData.courseName) : courses;
+  const enrolledCourse = userData
+    ? courses.find(course => course.courseName === userData.courseName)
+    : null;
+  const otherCourses = userData
+    ? courses.filter(course => course.courseName !== userData.courseName)
+    : courses;
 
   return (
     <div style={{ 
@@ -315,17 +325,24 @@ Please provide me with enrollment details.`;
                   width: `${enrolledCourseImageConfig.width}px`,
                   flexShrink: 0
                 },
-                background: `linear-gradient(135deg, #${((parseInt(enrolledCourse.id.split(' ')[1]) * 123) % 899) + 100} 0%, #${((parseInt(enrolledCourse.id.split(' ')[1]) * 456) % 899) + 100} 100%)`,
+                position: 'relative',
+                overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'white',
-                fontSize: 'clamp(2rem, 6vw, 3rem)',
-                fontWeight: 'bold',
-                position: 'relative',
-                overflow: 'hidden'
+                background: '#f3f3f3'
               }}>
-                {enrolledCourse.name.charAt(0)}
+                <img
+                  src={enrolledCourse.coursePhoto || '/courses/placeholder.jpg'}
+                  alt={enrolledCourse.courseName}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block'
+                  }}
+                  onError={e => { e.target.src = '/courses/placeholder.jpg'; }}
+                />
                 <div style={{
                   position: 'absolute',
                   top: 0,
@@ -346,7 +363,7 @@ Please provide me with enrollment details.`;
                   color: '#2d3748',
                   fontSize: 'clamp(1.2rem, 3vw, 1.5rem)'
                 }}>
-                  {enrolledCourse.name}
+                  {enrolledCourse.courseName}
                 </h3>
                 
                 <div style={{ 
@@ -388,21 +405,24 @@ Please provide me with enrollment details.`;
                   {enrolledCourse.description}
                 </p>
                 
-                <button style={{
-                  padding: '0.6rem 1.2rem',
-                  backgroundColor: '#667eea',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.2s ease',
-                  ':hover': {
-                    backgroundColor: '#5a67d8',
-                    transform: 'translateY(-2px)'
-                  }
-                }}>
+                <button
+                  onClick={() => router.push(`/onlineCourse/course/${encodeURIComponent(enrolledCourse.courseName)}`)}
+                  style={{
+                    padding: '0.6rem 1.2rem',
+                    backgroundColor: '#667eea',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '0.9rem',
+                    transition: 'all 0.2s ease',
+                    ':hover': {
+                      backgroundColor: '#5a67d8',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
                   Continue Learning
                 </button>
               </div>
@@ -493,19 +513,25 @@ Please provide me with enrollment details.`;
                 <div style={{
                   width: '100%',
                   height: `${otherCoursesImageConfig.height}px`,
-                  background: isEnrolled 
-                    ? `linear-gradient(135deg, #${((parseInt(course.id.split(' ')[1]) * 123) % 899) + 100} 0%, #${((parseInt(course.id.split(' ')[1]) * 456) % 899) + 100} 100%)`
-                    : 'linear-gradient(135deg, #ccc 0%, #999 100%)',
+                  position: 'relative',
+                  overflow: 'hidden',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
-                  fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-                  fontWeight: 'bold',
-                  position: 'relative',
-                  overflow: 'hidden'
+                  background: '#f3f3f3'
                 }}>
-                  {course.name.charAt(0)}
+                  <img
+                    src={course.coursePhoto || '/courses/placeholder.jpg'}
+                    alt={course.courseName}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                      filter: !isEnrolled ? 'grayscale(60%) blur(1px)' : 'none'
+                    }}
+                    onError={e => { e.target.src = '/courses/placeholder.jpg'; }}
+                  />
                   {!isEnrolled && (
                     <div style={{
                       position: 'absolute',
@@ -540,7 +566,7 @@ Please provide me with enrollment details.`;
                     color: isEnrolled ? '#2d3748' : '#718096',
                     fontSize: 'clamp(1.1rem, 3vw, 1.3rem)'
                   }}>
-                    {course.name}
+                    {course.courseName}
                     {isEnrolled && (
                       <span style={{
                         fontSize: '0.8rem',
@@ -654,7 +680,7 @@ Please provide me with enrollment details.`;
               lineHeight: '1.6',
               fontSize: 'clamp(0.9rem, 2.5vw, 1rem)'
             }}>
-              You are not currently enrolled in <strong>{lockedCourse?.name}</strong>. 
+              You are not currently enrolled in <strong>{lockedCourse?.courseName}</strong>. 
               Please contact us via WhatsApp to enroll in this course.
             </p>
             
@@ -686,7 +712,7 @@ Please provide me with enrollment details.`;
                   <span>{userData.courseName || 'None'}</span>
                   
                   <span style={{ fontWeight: '600', color: '#4a5568' }}>Requested Course:</span>
-                  <span>{lockedCourse?.name}</span>
+                  <span>{lockedCourse?.courseName}</span>
                 </div>
               </div>
             )}
