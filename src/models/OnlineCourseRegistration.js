@@ -6,7 +6,17 @@ const CourseRegistrationSchema = new Schema({
   fatherName: { type: String, required: true },
   phoneNumber: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  courseSelected: { type: String, required: true },
+  courseSelected: { 
+    type: String, 
+    required: true,
+    enum: [
+      "VN video editing",
+      "AI and ChatGPT",
+      "MS Excel Course",
+      "Canva Course",
+      "HTML Course"
+    ]
+  },
   password: { type: String },
   registrationTimestamp: { type: Date, default: Date.now },
   role: { type: String, default: 'online-course-student' },
