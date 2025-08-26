@@ -24,13 +24,13 @@ export default function CloudinaryUploader() {
       if (!res.ok) throw new Error('Failed to fetch photos');
       const data = await res.json();
       
-      // Map the response to match your component's expected format
-      const formattedPhotos = data.images.map(image => ({
-        public_id: image.publicId,
+      // Use data.photos instead of data.images
+      const formattedPhotos = (data.photos || []).map(image => ({
+        public_id: image.public_id,
         url: image.url,
       }));
       
-      setPhotos(formattedPhotos || []);
+      setPhotos(formattedPhotos);
     } catch (error) {
       console.error('Error fetching photos:', error);
       setError('Failed to load photos. Please try refreshing the page.');
