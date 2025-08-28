@@ -1,9 +1,16 @@
-'use client'
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect, useContext } from 'react';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { UserContext } from "@/app/components/userContext";
 
 export default function ResourceLibrary() {
+  const { isAuthenticated, loading } = useContext(UserContext);
+  const router = useRouter();
+  const [verified, setVerified] = useState(false);
+  
   const [resources, setResources] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,15 +26,60 @@ export default function ResourceLibrary() {
   // Image height adjustable in code (not through UI)
   const imageHeight = 570; // Change this value to adjust image height in pixels
 
+  // Authentication check
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/auth/verify", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          setVerified(true);
+        } else {
+          const data = await res.json();
+          console.warn("Verification failed:", data?.message);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          router.push("/login");
+        }
+      } catch (error) {
+        console.error("Error verifying token:", error);
+        router.push("/login");
+      }
+    };
+
+    if (!loading && isAuthenticated) {
+      checkToken();
+    } else if (!loading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [loading, isAuthenticated, router]);
+
   // Fetch resources
   const fetchResources = async (name = "", category = "", page = 1) => {
     setIsLoading(true);
     try {
+      const token = localStorage.getItem("token");
       let url = `/api/resources?page=${page}&limit=${pagination.limit}`;
       if (name) url += `&name=${encodeURIComponent(name)}`;
       if (category) url += `&category=${encodeURIComponent(category)}`;
       
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
       
       if (res.ok) {
@@ -70,8 +122,10 @@ export default function ResourceLibrary() {
 
   // Initial fetch
   useEffect(() => {
-    fetchResources();
-  }, []);
+    if (verified) {
+      fetchResources();
+    }
+  }, [verified]);
 
   // Categories from your schema
   const categories = [
@@ -107,6 +161,15 @@ export default function ResourceLibrary() {
       }
     }
   };
+
+  // Show loading spinner while authenticating
+  if (loading || !verified) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100">

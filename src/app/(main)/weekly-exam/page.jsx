@@ -4,28 +4,28 @@ import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { UserContext } from "@/app/components/userContext";
-import { time } from "framer-motion";
+
 
 const exams = [
-  { id: "WE_19", title: "Weekly Exam 19 (02-08-2025) - Word + Tally + Excel + Basic ",path:"/weekly-exam/WE_19"},
-  { id: "WE_18", title: "Weekly Exam 18 (02-08-2025) - Word + Basic ",path:"/weekly-exam/WE_18"},
-  { id: "WE_17", title: "Weekly Exam 17 (19-07-2025) - Word + Tally + Excel + Basic ",path:"/weekly-exam/WE_17"},
-  { id: "WE_16", title: "Weekly Exam 16 (19-07-2025) - Word + Basic ",path:"/weekly-exam/WE_16"},
-  { id: "WE_15", title: "Weekly Exam 15 (12-07-2025) - Word + Tally + Excel + Basic ",path:"/weekly-exam/WE_15"},
-  { id: "WE_14", title: "Weekly Exam 14 (16-05-2025) - Tally + Excel", path: "/weekly-exam/WE_14" },
-  { id: "WE_13", title: "Weekly Exam 13 (16-05-2025) - Word + Basic", path: "/weekly-exam/WE_13" },
-  { id: "WE_12", title: "Weekly Exam 12 (16-05-2025) - Word + Excel + Basic", path: "/weekly-exam/WE_12" },
-  { id: "WE_11", title: "Weekly Exam 11 (10-05-2025)", path: "/weekly-exam/WE_11" },
-  { id: "WE_10", title: "Weekly Exam 10 (02-05-2025)", path: "/weekly-exam/WE_10" },
-  { id: "WE_9", title: "Weekly Exam 09 (02-05-2025)", path: "/weekly-exam/WE_9" },
-  { id: "WE_8", title: "Weekly Exam 08 (19-04-2025)", path: "/weekly-exam/WE_8" },
-  { id: "WE_7", title: "Weekly Exam 07 (05-03-2025)", path: "/weekly-exam/WE_7" },
-  { id: "WE_6", title: "Weekly Exam 06 (29-03-2025)", path: "/weekly-exam/WE_6" },
-  { id: "WE_5", title: "Weekly Exam 05 (22-03-2025)", path: "/weekly-exam/WE_5" },
-  { id: "WE_4", title: "Weekly Exam 04 (15-03-2025)", path: "/weekly-exam/WE_4" },
-  { id: "WE_3", title: "Weekly Exam 03 (08-03-2025)", path: "/weekly-exam/WE_3" },
-  { id: "WE_2", title: "Weekly Exam 02 (01-03-2025)", path: "/weekly-exam/WE_2" },
-  { id: "WE_1", title: "Weekly Exam 01 (22-02-2025)", path: "/weekly-exam/WE_1" },
+  { id: "WE_19", title: "Weekly Exam 19 ",path:"/weekly-exam/WE_19"},
+  { id: "WE_18", title: "Weekly Exam 18 ",path:"/weekly-exam/WE_18"},
+  { id: "WE_17", title: "Weekly Exam 17 ",path:"/weekly-exam/WE_17"},
+  { id: "WE_16", title: "Weekly Exam 16 ",path:"/weekly-exam/WE_16"},
+  { id: "WE_15", title: "Weekly Exam 15 ",path:"/weekly-exam/WE_15"},
+  { id: "WE_14", title: "Weekly Exam 14 ",path: "/weekly-exam/WE_14" },
+  { id: "WE_13", title: "Weekly Exam 13 ",path: "/weekly-exam/WE_13" },
+  { id: "WE_12", title: "Weekly Exam 12 ",path: "/weekly-exam/WE_12" },
+  { id: "WE_11", title: "Weekly Exam 11 ",path: "/weekly-exam/WE_11" },
+  { id: "WE_10", title: "Weekly Exam 10 ",path: "/weekly-exam/WE_10" },
+  { id: "WE_9", title: "Weekly Exam 09 ", path: "/weekly-exam/WE_9" },
+  { id: "WE_8", title: "Weekly Exam 08 ", path: "/weekly-exam/WE_8" },
+  { id: "WE_7", title: "Weekly Exam 07 ", path: "/weekly-exam/WE_7" },
+  { id: "WE_6", title: "Weekly Exam 06 ", path: "/weekly-exam/WE_6" },
+  { id: "WE_5", title: "Weekly Exam 05 ", path: "/weekly-exam/WE_5" },
+  { id: "WE_4", title: "Weekly Exam 04 ", path: "/weekly-exam/WE_4" },
+  { id: "WE_3", title: "Weekly Exam 03 ", path: "/weekly-exam/WE_3" },
+  { id: "WE_2", title: "Weekly Exam 02 ", path: "/weekly-exam/WE_2" },
+  { id: "WE_1", title: "Weekly Exam 01 ", path: "/weekly-exam/WE_1" },
 ];
 
 export default function ExamList() {
