@@ -18,6 +18,7 @@ export default function CoursePlayer() {
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [orientation, setOrientation] = useState('portrait');
   
   const videoRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
@@ -26,17 +27,31 @@ export default function CoursePlayer() {
   useEffect(() => {
     // Check if mobile on initial render and resize
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-      if (window.innerWidth < 1024) {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      
+      // Set initial sidebar state based on device
+      if (mobile) {
         setIsSidebarOpen(false);
       }
+      
+      // Check orientation
+      setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
     };
     
     checkMobile();
     window.addEventListener('resize', checkMobile);
     
+    // Listen for orientation changes
+    const handleOrientationChange = () => {
+      setOrientation(window.screen.orientation?.type.includes('landscape') ? 'landscape' : 'portrait');
+    };
+    
+    window.addEventListener('orientationchange', handleOrientationChange);
+    
     return () => {
       window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('orientationchange', handleOrientationChange);
     };
   }, []);
 
@@ -83,6 +98,30 @@ export default function CoursePlayer() {
       }
     };
   }, [showControls, isPlaying]);
+
+  // Handle fullscreen change events
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      
+      // Auto-rotate to landscape when entering fullscreen on mobile
+      if (document.fullscreenElement && isMobile && orientation === 'portrait') {
+        try {
+          window.screen.orientation.lock('landscape').catch(err => {
+            console.log('Orientation lock not supported:', err);
+          });
+        } catch (err) {
+          console.log('Orientation API not supported');
+        }
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, [isMobile, orientation]);
 
   const fetchCourse = async (courseName) => {
     try {
@@ -163,13 +202,15 @@ export default function CoursePlayer() {
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      playerContainerRef.current.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
-      setIsFullscreen(true);
+      if (playerContainerRef.current.requestFullscreen) {
+        playerContainerRef.current.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      }
     } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
     }
   };
 
@@ -183,6 +224,22 @@ export default function CoursePlayer() {
     if (videoRef.current) {
       videoRef.current.currentTime += seconds;
     }
+  };
+
+  // Handle touch events for mobile controls
+  const handleVideoTouch = (e) => {
+    e.preventDefault();
+    setShowControls(true);
+    
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isPlaying) {
+        setShowControls(false);
+      }
+    }, 3000);
   };
 
   if (loading) {
@@ -242,36 +299,39 @@ export default function CoursePlayer() {
       <Head>
         <title>{course.name} | Course Player</title>
         <meta name="description" content={`Watch ${course.name} course videos`} />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
       </Head>
       
-      <div className="flex flex-col h-screen bg-gray-50 text-gray-800 overflow-hidden">
-        {/* Header */}
-        <header className="bg-white p-4 flex items-center justify-between shadow-sm z-10 border-b">
-          <h1 className="text-xl font-bold truncate animate-fade-in">{course.name}</h1>
-          <button 
-            onClick={toggleSidebar}
-            className="p-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-all duration-300 transform hover:scale-110 lg:hidden"
-            aria-label={isSidebarOpen ? 'Hide lessons' : 'Show lessons'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {isSidebarOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </header>
+      <div className="flex flex-col h-screen bg-gray-50 text-gray-800 overflow-hidden" ref={playerContainerRef}>
+        {/* Header - Hidden in fullscreen mode */}
+        {!isFullscreen && (
+          <header className="bg-white p-4 flex items-center justify-between shadow-sm z-10 border-b">
+            <h1 className="text-xl font-bold truncate animate-fade-in">{course.name}</h1>
+            <button 
+              onClick={toggleSidebar}
+              className="p-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-all duration-300 transform hover:scale-110 lg:hidden"
+              aria-label={isSidebarOpen ? 'Hide lessons' : 'Show lessons'}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isSidebarOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </header>
+        )}
 
         {/* Main Content */}
         <div className="flex flex-1 overflow-hidden">
           {/* Video Player Section */}
-          <div className={`${isSidebarOpen ? 'lg:w-3/4' : 'w-full'} transition-all duration-500 ease-in-out`}>
-            <div className="h-full flex flex-col" ref={playerContainerRef}>
+          <div className={`${isSidebarOpen && !isFullscreen ? 'lg:w-3/4' : 'w-full'} transition-all duration-500 ease-in-out`}>
+            <div className="h-full flex flex-col">
               {selectedVideo ? (
                 <>
                   <div 
-                    className="relative pt-[56.25%] bg-black animate-fade-in"
+                    className={`relative ${isFullscreen ? 'h-full' : 'pt-[56.25%]'} bg-black animate-fade-in`}
                     onMouseMove={() => {
                       setShowControls(true);
                       if (controlsTimeoutRef.current) {
@@ -286,17 +346,19 @@ export default function CoursePlayer() {
                       }
                     }}
                     onClick={togglePlay}
+                    onTouchStart={handleVideoTouch}
                   >
                     <video
                       ref={videoRef}
                       key={selectedVideo._id}
-                      className="absolute inset-0 w-full h-full"
+                      className={`${isFullscreen ? 'h-full w-full object-contain' : 'absolute inset-0 w-full h-full'}`}
                       controls={false}
                       autoPlay
                       onTimeUpdate={handleTimeUpdate}
                       onPlay={() => setIsPlaying(true)}
                       onPause={() => setIsPlaying(false)}
                       onEnded={() => setIsPlaying(false)}
+                      playsInline
                     >
                       <source src={selectedVideo.secureUrl} type={`video/${selectedVideo.format || 'mp4'}`} />
                       Your browser does not support the video tag.
@@ -415,19 +477,21 @@ export default function CoursePlayer() {
                     </div>
                   </div>
                   
-                  <div className="p-4 md:p-6 bg-white flex-1 overflow-y-auto animate-slide-up shadow-sm">
-                    <h2 className="text-xl md:text-2xl font-bold mb-2">{selectedVideo.title}</h2>
-                    <p className="text-gray-600 mb-4">{selectedVideo.description}</p>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <span className="flex items-center mr-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {Math.floor(selectedVideo.duration / 60)}:{(selectedVideo.duration % 60).toString().padStart(2, '0')}
-                      </span>
-                      <span>Lesson {course.videos.findIndex(v => v._id === selectedVideo._id) + 1} of {course.videos.length}</span>
+                  {!isFullscreen && (
+                    <div className="p-4 md:p-6 bg-white flex-1 overflow-y-auto animate-slide-up shadow-sm">
+                      <h2 className="text-xl md:text-2xl font-bold mb-2">{selectedVideo.title}</h2>
+                      <p className="text-gray-600 mb-4">{selectedVideo.description}</p>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <span className="flex items-center mr-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {Math.floor(selectedVideo.duration / 60)}:{(selectedVideo.duration % 60).toString().padStart(2, '0')}
+                        </span>
+                        <span>Lesson {course.videos.findIndex(v => v._id === selectedVideo._id) + 1} of {course.videos.length}</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </>
               ) : (
                 <div className="h-full flex items-center justify-center animate-pulse bg-gray-100">
@@ -442,55 +506,57 @@ export default function CoursePlayer() {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className={`w-full lg:w-1/4 bg-white border-l border-gray-200 overflow-y-auto transition-all duration-500 ease-in-out ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}>
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  Course Content
-                </h2>
-                <span className="text-sm text-gray-500">{course.videos.length} lessons</span>
-              </div>
-              <ul className="space-y-2">
-                {course.videos.map((video, index) => (
-                  <li key={video._id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                    <button
-                      onClick={() => selectVideo(video)}
-                      className={`w-full text-left p-3 rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 ${
-                        selectedVideo && selectedVideo._id === video._id
-                          ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-sm'
-                          : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <span className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
+          {/* Sidebar - Hidden in fullscreen mode */}
+          {!isFullscreen && (
+            <div className={`w-full lg:w-1/4 bg-white border-l border-gray-200 overflow-y-auto transition-all duration-500 ease-in-out ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}>
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Course Content
+                  </h2>
+                  <span className="text-sm text-gray-500">{course.videos.length} lessons</span>
+                </div>
+                <ul className="space-y-2">
+                  {course.videos.map((video, index) => (
+                    <li key={video._id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                      <button
+                        onClick={() => selectVideo(video)}
+                        className={`w-full text-left p-3 rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 ${
                           selectedVideo && selectedVideo._id === video._id
-                            ? 'bg-blue-100 text-blue-600'
-                            : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {index + 1}
-                        </span>
-                        <span className="truncate text-sm font-medium">{video.title}</span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1 ml-11 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                            ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-sm'
+                            : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <span className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
+                            selectedVideo && selectedVideo._id === video._id
+                              ? 'bg-blue-100 text-blue-600'
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {index + 1}
+                          </span>
+                          <span className="truncate text-sm font-medium">{video.title}</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 ml-11 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Navigation */}
-        {selectedVideo && course.videos.length > 1 && (
+        {/* Navigation - Hidden in fullscreen mode */}
+        {!isFullscreen && selectedVideo && course.videos.length > 1 && (
           <div className="bg-white p-4 border-t border-gray-200 flex justify-between animate-fade-in-up shadow-sm">
             <button
               onClick={() => {
@@ -507,7 +573,7 @@ export default function CoursePlayer() {
               }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path strokeLinecap="round" strokeLinejoin='round' strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Previous
             </button>
@@ -594,6 +660,27 @@ export default function CoursePlayer() {
         
         .overflow-y-auto::-webkit-scrollbar-thumb:hover {
           background: #a8a8a8;
+        }
+        
+        /* Fullscreen styles */
+        :fullscreen .video-container {
+          width: 100%;
+          height: 100%;
+        }
+        
+        /* Mobile-specific optimizations */
+        @media (max-width: 768px) {
+          .video-controls {
+            padding: 0.5rem;
+          }
+          
+          .video-controls button {
+            padding: 0.375rem;
+          }
+          
+          .sidebar-item {
+            padding: 0.75rem;
+          }
         }
       `}</style>
     </>
