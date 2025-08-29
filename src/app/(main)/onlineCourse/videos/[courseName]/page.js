@@ -19,6 +19,7 @@ export default function CoursePlayer() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [orientation, setOrientation] = useState('portrait');
+  const [isIOS, setIsIOS] = useState(false);
   
   const videoRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
@@ -40,6 +41,10 @@ export default function CoursePlayer() {
     };
     
     checkMobile();
+    // Detect iOS devices (iPhone/iPad)
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    const iOSDetected = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    setIsIOS(!!iOSDetected);
     window.addEventListener('resize', checkMobile);
     
     // Listen for orientation changes
@@ -158,7 +163,7 @@ export default function CoursePlayer() {
 
   const selectVideo = (video) => {
     setSelectedVideo(video);
-    setIsPlaying(true);
+    setIsPlaying(!isIOS);
     
     if (isMobile) {
       setIsSidebarOpen(false);
@@ -168,7 +173,17 @@ export default function CoursePlayer() {
   const togglePlay = () => {
     if (videoRef.current) {
       if (videoRef.current.paused) {
-        videoRef.current.play();
+        videoRef.current.play().catch(err => {
+          console.error("Error playing video:", err);
+          // Handle iOS playback restrictions
+          if (isMobile) {
+            // Try to play with user interaction
+            document.addEventListener('touchstart', function playOnTouch() {
+              videoRef.current.play();
+              document.removeEventListener('touchstart', playOnTouch);
+            }, { once: true });
+          }
+        });
         setIsPlaying(true);
       } else {
         videoRef.current.pause();
@@ -215,6 +230,7 @@ export default function CoursePlayer() {
   };
 
   const formatTime = (seconds) => {
+    if (isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -306,7 +322,16 @@ export default function CoursePlayer() {
         {/* Header - Hidden in fullscreen mode */}
         {!isFullscreen && (
           <header className="bg-white p-4 flex items-center justify-between shadow-sm z-10 border-b">
-            <h1 className="text-xl font-bold truncate animate-fade-in">{course.name}</h1>
+            <div className="flex items-center">
+              {course.titlePhotoUrl && (
+                <img 
+                  src={course.titlePhotoUrl} 
+                  alt={course.name}
+                  className="w-10 h-10 rounded-md object-cover mr-3"
+                />
+              )}
+              <h1 className="text-xl font-bold truncate animate-fade-in">{course.name}</h1>
+            </div>
             <button 
               onClick={toggleSidebar}
               className="p-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-all duration-300 transform hover:scale-110 lg:hidden"
@@ -345,27 +370,35 @@ export default function CoursePlayer() {
                         }, 2000);
                       }
                     }}
-                    onClick={togglePlay}
-                    onTouchStart={handleVideoTouch}
+                    onClick={!isIOS ? togglePlay : undefined}
+                    onTouchStart={!isIOS ? handleVideoTouch : undefined}
                   >
                     <video
                       ref={videoRef}
                       key={selectedVideo._id}
-                      className={`${isFullscreen ? 'h-full w-full object-contain' : 'absolute inset-0 w-full h-full'}`}
-                      controls={false}
-                      autoPlay
+                      className={`${isFullscreen ? 'h-full w-full object-contain' : 'absolute inset-0 w-full h-full'} ${!isIOS ? 'custom-video' : ''}`}
+                      controls={isIOS}
+                      autoPlay={!isIOS}
                       onTimeUpdate={handleTimeUpdate}
                       onPlay={() => setIsPlaying(true)}
                       onPause={() => setIsPlaying(false)}
                       onEnded={() => setIsPlaying(false)}
                       playsInline
+                      preload="metadata"
+                      muted={isIOS ? false : isMobile}
+                      onTouchStart={(e) => {
+                        if (isIOS && videoRef.current?.paused) {
+                          videoRef.current.play().catch(() => {});
+                        }
+                        handleVideoTouch(e);
+                      }}
                     >
                       <source src={selectedVideo.secureUrl} type={`video/${selectedVideo.format || 'mp4'}`} />
                       Your browser does not support the video tag.
                     </video>
                     
                     {/* Play/Pause overlay button */}
-                    {!isPlaying && (
+                    {!isIOS && !isPlaying && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity duration-300">
                         <button 
                           className="p-4 rounded-full bg-white/90 hover:bg-white transition-all duration-300 transform hover:scale-110"
@@ -379,6 +412,7 @@ export default function CoursePlayer() {
                     )}
                     
                     {/* Custom Video Controls */}
+                    {!isIOS && (
                     <div 
                       className={`absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end transition-opacity duration-300 ${
                         showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -392,7 +426,7 @@ export default function CoursePlayer() {
                           onClick={handleSeek}
                         >
                           <div 
-                            className="h-full bg-blue-500 rounded-full transition-all duration-200 relative"
+                            className="h-full bg-red-600 rounded-full transition-all duration-200 relative"
                             style={{ width: `${(currentTime / duration) * 100}%` }}
                           >
                             <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
@@ -453,7 +487,7 @@ export default function CoursePlayer() {
                                 step="0.01"
                                 value={volume}
                                 onChange={handleVolumeChange}
-                                className="w-16 md:w-20 accent-blue-500"
+                                className="w-16 md:w-20 accent-red-600"
                               />
                             </div>
                             
@@ -475,6 +509,7 @@ export default function CoursePlayer() {
                         </div>
                       </div>
                     </div>
+                    )}
                   </div>
                   
                   {!isFullscreen && (
@@ -510,14 +545,31 @@ export default function CoursePlayer() {
           {!isFullscreen && (
             <div className={`w-full lg:w-1/4 bg-white border-l border-gray-200 overflow-y-auto transition-all duration-500 ease-in-out ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}>
               <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {/* Course Info Section */}
+                <div className="mb-6">
+                  {course.titlePhotoUrl && (
+                    <img 
+                      src={course.titlePhotoUrl} 
+                      alt={course.name}
+                      className="w-full h-40 object-cover rounded-lg mb-3"
+                    />
+                  )}
+                  <h2 className="text-lg font-semibold mb-2">{course.name}</h2>
+                  {course.description && (
+                    <p className="text-sm text-gray-600 mb-3">{course.description}</p>
+                  )}
+                  <div className="flex items-center text-sm text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
+                    <span>{course.videos.length} lessons</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-md font-medium flex items-center">
                     Course Content
-                  </h2>
-                  <span className="text-sm text-gray-500">{course.videos.length} lessons</span>
+                  </h3>
                 </div>
                 <ul className="space-y-2">
                   {course.videos.map((video, index) => (
@@ -526,14 +578,14 @@ export default function CoursePlayer() {
                         onClick={() => selectVideo(video)}
                         className={`w-full text-left p-3 rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 ${
                           selectedVideo && selectedVideo._id === video._id
-                            ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-sm'
+                            ? 'bg-red-50 text-red-600 border border-red-200 shadow-sm'
                             : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center">
                           <span className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full mr-3 ${
                             selectedVideo && selectedVideo._id === video._id
-                              ? 'bg-blue-100 text-blue-600'
+                              ? 'bg-red-100 text-red-600'
                               : 'bg-gray-200 text-gray-600'
                           }`}>
                             {index + 1}
@@ -569,7 +621,7 @@ export default function CoursePlayer() {
               className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center ${
                 course.videos.findIndex(v => v._id === selectedVideo._id) === 0
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-x-1'
+                  : 'bg-red-600 hover:bg-red-700 text-white transform hover:-translate-x-1'
               }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -588,7 +640,7 @@ export default function CoursePlayer() {
               className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center ${
                 course.videos.findIndex(v => v._id === selectedVideo._id) === course.videos.length - 1
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white transform hover:translate-x-1'
+                  : 'bg-red-600 hover:bg-red-700 text-white transform hover:translate-x-1'
               }`}
             >
               Next
@@ -638,8 +690,8 @@ export default function CoursePlayer() {
           user-select: none;
         }
         
-        /* Hide native controls */
-        video::-webkit-media-controls {
+        /* Hide native controls only for our custom player (non-iOS) */
+        .custom-video::-webkit-media-controls {
           display: none !important;
         }
         
@@ -681,6 +733,11 @@ export default function CoursePlayer() {
           .sidebar-item {
             padding: 0.75rem;
           }
+        }
+        
+        /* iOS specific fixes */
+        video {
+          -webkit-tap-highlight-color: transparent;
         }
       `}</style>
     </>
