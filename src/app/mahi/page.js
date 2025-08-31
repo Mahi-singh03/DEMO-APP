@@ -87,13 +87,13 @@ const AdminDashboard = () => {
 
   const actionCards = [
     { 
-      id: 'view-students', 
-      title: 'View Students', 
+      id: 'Manage Students', 
+      title: 'Manage Students', 
       icon: <FaUsers className="text-4xl" />,
       bgColor: 'bg-yellow-100',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/mahi/students/viewAllStudents'
+      path: '/mahi/students/manageStudents'
     },
     { 
       id: 'add-student', 
