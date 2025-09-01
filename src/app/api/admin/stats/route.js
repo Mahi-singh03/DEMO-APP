@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import registered_students from '@/models/students'; 
-import dbConnect from '@/lib/DBconnection'; 
+import connectDB from '@/lib/DBconnection'; 
 import staff from "@/models/staff";
 
 export async function GET(request) {
-  await dbConnect();
+  await connectDB();
 
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type');

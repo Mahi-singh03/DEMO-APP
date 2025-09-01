@@ -39,7 +39,7 @@ export default function NewStudent() {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await fetch('/api/students', {
+      const response = await fetch('/api/admin/student/manageStudents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

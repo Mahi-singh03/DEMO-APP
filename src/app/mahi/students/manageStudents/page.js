@@ -21,9 +21,12 @@ import {
   FiEdit,
   FiTrash2,
   FiEye,
-  FiX
+  FiX,
+  FiCheck,
+  FiAward,
+  FiCheckCircle,
+  FiUsers
 } from 'react-icons/fi';
-import { FiCheck } from "react-icons/fi";
 import { useDebounce } from 'use-debounce';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -32,9 +35,12 @@ import { useRouter } from 'next/navigation';
 const StudentManagement = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [certifiedOnly, setCertifiedOnly] = useState(false);
   const [debouncedSearchTerm] = useDebounce(searchTerm, 500);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -51,6 +57,13 @@ const StudentManagement = () => {
     student: null,
     loading: false
   });
+  const [stats, setStats] = useState(null);
+  const [showStats, setShowStats] = useState(false);
+  const [notification, setNotification] = useState({
+    isOpen: false,
+    type: '',
+    message: ''
+  });
   const router = useRouter();
 
   // Fetch students with pagination, search, and sorting
@@ -62,6 +75,8 @@ const StudentManagement = () => {
         limit: pagination.limit,
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
         ...(courseFilter && { course: courseFilter }),
+        ...(statusFilter && { status: statusFilter }),
+        ...(certifiedOnly && { certifiedOnly: 'true' }),
         sort: sortConfig.field,
         order: sortConfig.direction
       });
@@ -89,14 +104,36 @@ const StudentManagement = () => {
     }
   };
 
+  // Fetch statistics
+  const fetchStats = async () => {
+    try {
+      setStatsLoading(true);
+      const response = await fetch('/api/admin/student/manageStudents/stats');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch statistics');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setStats(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
-  }, [pagination.currentPage, debouncedSearchTerm, courseFilter, sortConfig]);
+  }, [pagination.currentPage, debouncedSearchTerm, courseFilter, statusFilter, certifiedOnly, sortConfig]);
 
-  // Reset to page 1 when search term, course filter or sort changes
+  // Reset to page 1 when filters change
   useEffect(() => {
     setPagination(prev => ({ ...prev, currentPage: 1 }));
-  }, [debouncedSearchTerm, courseFilter, sortConfig]);
+  }, [debouncedSearchTerm, courseFilter, statusFilter, certifiedOnly, sortConfig]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -125,7 +162,16 @@ const StudentManagement = () => {
   const handleClearFilters = () => {
     setSearchTerm('');
     setCourseFilter('');
+    setStatusFilter('');
+    setCertifiedOnly(false);
     setPagination(prev => ({ ...prev, currentPage: 1 }));
+  };
+
+  const toggleStats = () => {
+    if (!showStats) {
+      fetchStats();
+    }
+    setShowStats(!showStats);
   };
 
   const openDeleteModal = (student) => {
@@ -157,21 +203,16 @@ const StudentManagement = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Show success message
         setDeleteModal(prev => ({ ...prev, loading: false }));
         closeDeleteModal();
-        
-        // Refresh the student list
         refreshData();
         
-        // Show success notification
         setNotification({
           isOpen: true,
           type: 'success',
           message: 'Student deleted successfully'
         });
         
-        // Auto-hide notification after 3 seconds
         setTimeout(() => {
           setNotification(prev => ({ ...prev, isOpen: false }));
         }, 3000);
@@ -193,12 +234,6 @@ const StudentManagement = () => {
       });
     }
   };
-
-  const [notification, setNotification] = useState({
-    isOpen: false,
-    type: '',
-    message: ''
-  });
 
   // Animation variants
   const containerVariants = {
@@ -383,6 +418,7 @@ const StudentManagement = () => {
           </div>
           
           <div className="flex gap-3">
+      
             <Link 
               href="/mahi" 
               className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center gap-2 shadow-md"
@@ -392,7 +428,7 @@ const StudentManagement = () => {
           </div>
         </motion.div>
 
-        {/* Rest of the component remains the same */}
+
         {/* Search and Filters */}
         <motion.div
           initial={{ y: -10, opacity: 0 }}
@@ -401,8 +437,8 @@ const StudentManagement = () => {
           className="mb-8 bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500"
         >
           <form onSubmit={handleSearch} className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FiSearch className="text-gray-400" />
                 </div>
@@ -436,6 +472,19 @@ const StudentManagement = () => {
                 <option value="PTE">PTE</option>
                 <option value="AutoCAD">AutoCAD</option>
               </select>
+              
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              >
+                <option value="">All Statuses</option>
+                <option value="active">Active Students</option>
+                <option value="completed">Completed Courses</option>
+                <option value="certified">Certified Students</option>
+              </select>
+              
+             
             </div>
             
             <div className="flex flex-wrap gap-2">
@@ -593,90 +642,123 @@ const StudentManagement = () => {
           >
             <AnimatePresence>
               {students.length > 0 ? (
-                students.map((student) => (
-                  <motion.div
-                    key={student._id}
-                    variants={itemVariants}
-                    whileHover={{ 
-                      y: -5, 
-                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
-                      borderColor: '#3b82f6'
-                    }}
-                    className="bg-white rounded-xl overflow-hidden border border-gray-200 transition-all duration-200 shadow-sm"
-                  >
-                    <div className="p-5">
-                      <div className="flex items-center mb-4">
-                        <div className="w-25 h-25 rounded-3xl overflow-hidden mr-4 border-2 border-gray-200">
-                          {renderStudentPhoto(student)}
+                students.map((student) => {
+                  const currentDate = new Date();
+                  const farewellDate = new Date(student.farewellDate);
+                  const isActive = farewellDate > currentDate;
+                  const isCompleted = farewellDate <= currentDate;
+                  const isCertified = isCompleted && student.certificate;
+                  
+                  return (
+                    <motion.div
+                      key={student._id}
+                      variants={itemVariants}
+                      whileHover={{ 
+                        y: -5, 
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                        borderColor: '#3b82f6'
+                      }}
+                      className="bg-white rounded-xl overflow-hidden border border-gray-200 transition-all duration-200 shadow-sm"
+                    >
+                      <div className="p-5">
+                        <div className="flex items-center mb-4">
+                          <div className="w-25 h-25 rounded-3xl overflow-hidden mr-4 border-2 border-gray-200">
+                            {renderStudentPhoto(student)}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg text-gray-900 line-clamp-1">
+                              {student.fullName}
+                            </h3>
+                            <p className="text-gray-500 text-sm">Roll: {student.rollNo}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-lg text-gray-900 line-clamp-1">
-                            {student.fullName}
-                          </h3>
-                          <p className="text-gray-500 text-sm">Roll: {student.rollNo}</p>
+                        
+                        {/* Status and Certificate Badges - Placed below image and name */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {isActive ? (
+                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full flex items-center">
+                              <FiCheckCircle className="mr-1" /> Active
+                            </span>
+                          ) : isCompleted ? (
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full flex items-center">
+                              <FiCalendar className="mr-1" /> Completed
+                            </span>
+                          ) : null}
+                          
+                          {isCompleted && (
+                            isCertified ? (
+                              <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full flex items-center">
+                                <FiAward className="mr-1" /> Certified
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full flex items-center">
+                                <FiX className="mr-1" /> Certificate not issued
+                              </span>
+                            )
+                          )}
                         </div>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center text-gray-600">
+                            <FiPhone className="mr-2 text-blue-500 flex-shrink-0" />
+                            <span className="text-sm truncate">{student.phoneNumber}</span>
+                          </div>
+                          
+                          {student.parentsPhoneNumber && (
+                            <div className="flex items-center text-gray-600">
+                              <FiPhone className="mr-2 text-blue-500 flex-shrink-0" />
+                              <span className="text-sm truncate">Parent: {student.parentsPhoneNumber}</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center text-gray-600">
+                            <FiBook className="mr-2 text-blue-500 flex-shrink-0" />
+                            <span className="text-sm truncate">{student.selectedCourse}</span>
+                          </div>
+
+                          {student.courseDuration && (
+                            <div className="flex items-center text-gray-600">
+                              <FiClock className="mr-2 text-green-500 flex-shrink-0" />
+                              <span className="text-sm truncate">{student.courseDuration}</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center text-gray-600">
+                            <FiCalendar className="mr-2 text-blue-500 flex-shrink-0" />
+                            <span className="text-sm">
+                              {formatDate(student.joiningDate)} -{' '}
+                              {student.farewellDate ? formatDate(student.farewellDate) : 'Present'}
+                            </span>
+                          </div>
+                        </div>  
                       </div>
                       
-                      <div className="space-y-3">
-                        <div className="flex items-center text-gray-600">
-                          <FiPhone className="mr-2 text-blue-500" />
-                          <span className="text-sm">{student.phoneNumber}</span>
-                        </div>
+                      {/* Action Buttons */}
+                      <div className="border-t border-gray-200 p-4 flex justify-between">
+                        <Link 
+                          href={`/mahi/students/manageStudents/${student._id}`}
+                          className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 text-sm"
+                        >
+                          <FiEye size={16} /> View
+                        </Link>
                         
-                        {student.parentsPhoneNumber && (
-                          <div className="flex items-center text-gray-600">
-                            <FiPhone className="mr-2 text-blue-500" />
-                            <span className="text-sm">Parent: {student.parentsPhoneNumber}</span>
-                          </div>
-                        )}
+                        <Link 
+                          href={`/mahi/students/manageStudents/${student._id}`}
+                          className="px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition flex items-center gap-2 text-sm"
+                        >
+                          <FiEdit size={16} /> Edit
+                        </Link>
                         
-                        <div className="flex items-center text-gray-600">
-                          <FiBook className="mr-2 text-blue-500" />
-                          <span className="text-sm">{student.selectedCourse}</span>
-                        </div>
-
-                        {student.courseDuration && (
-                          <div className="flex items-center text-gray-600">
-                            <FiClock className="mr-2 text-green-500" />
-                            <span className="text-sm">{student.courseDuration}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center text-gray-600">
-                          <FiCalendar className="mr-2 text-blue-500" />
-                          <span className="text-sm">
-                            {formatDate(student.joiningDate)} -{' '}
-                            {student.farewellDate ? formatDate(student.farewellDate) : 'Present'}
-                          </span>
-                        </div>
-                      </div>  
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="border-t border-gray-200 p-4 flex justify-between">
-                      <Link 
-                        href={`/mahi/students/manageStudents/${student._id}`}
-                        className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 text-sm"
-                      >
-                        <FiEye size={16} /> View
-                      </Link>
-                      
-                      <Link 
-                        href={`/mahi/students/manageStudents/${student._id}`}
-                        className="px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition flex items-center gap-2 text-sm"
-                      >
-                        <FiEdit size={16} /> Edit
-                      </Link>
-                      
-                      <button 
-                        onClick={() => openDeleteModal(student)}
-                        className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2 text-sm"
-                      >
-                        <FiTrash2 size={16} /> Delete
-                      </button>
-                    </div>
-                  </motion.div>
-                ))
+                        <button 
+                          onClick={() => openDeleteModal(student)}
+                          className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2 text-sm"
+                        >
+                          <FiTrash2 size={16} /> Delete
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })
               ) : (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -684,7 +766,7 @@ const StudentManagement = () => {
                   className="col-span-full py-12 text-center bg-white rounded-xl shadow-sm p-8"
                 >
                   <div className="text-gray-500 text-lg">
-                    No students found{debouncedSearchTerm || courseFilter ? ' matching your search criteria' : ''}
+                    No students found{debouncedSearchTerm || courseFilter || statusFilter ? ' matching your search criteria' : ''}
                   </div>
                   <button 
                     onClick={handleClearFilters}

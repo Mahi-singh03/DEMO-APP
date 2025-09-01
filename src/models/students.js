@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { max } from 'date-fns';
 
 const userSchema = new mongoose.Schema({
   fullName: {
@@ -23,7 +22,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Gender is required'],
     enum: {
       values: ['Male', 'Female', 'Other'],
-      message: 'Gender must be either Male, Fmale, or Other',
+      message: 'Gender must be either Male, Female, or Other',
     },
     trim: true,
   },
@@ -115,7 +114,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  feeDetails: {
+    feeDetails: {
     totalFees: {
       type: Number,
       required: false,
@@ -145,6 +144,34 @@ const userSchema = new mongoose.Schema({
       paid: {
         type: Boolean,
         default: false
+      },
+      payments: [{
+        amount: {
+          type: Number,
+          required: false
+        },
+        date: {
+          type: Date,
+          default: Date.now
+        },
+        method: {
+          type: String,
+          default: 'cash'
+        }
+      }]
+    }],
+    payments: [{
+      amount: {
+        type: Number,
+        required: false
+      },
+      date: {
+        type: Date,
+        default: Date.now
+      },
+      method: {
+        type: String,
+        default: 'cash'
       }
     }]
   },
@@ -421,7 +448,7 @@ userSchema.pre('save', async function (next) {
   if (this.rollNo) return next();
 
   const currentYear = new Date().getFullYear();
-  const lastUser = await mongoose.model('registered_students').findOne().sort({ rollNo: -1 });
+  const lastUser = await this.constructor.findOne().sort({ rollNo: -1 });
 
   let newRollNo;
   if (lastUser && lastUser.rollNo && lastUser.rollNo.startsWith(currentYear.toString())) {

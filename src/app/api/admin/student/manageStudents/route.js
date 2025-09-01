@@ -26,6 +26,8 @@ export async function GET(request) {
     const course = searchParams.get('course') || '';
     const sort = searchParams.get('sort') || 'rollNo';
     const order = searchParams.get('order') || 'asc';
+    const status = searchParams.get('status') || ''; // 'active', 'completed', 'certified'
+    const certifiedOnly = searchParams.get('certifiedOnly') === 'true';
 
     // Build query for search and filtering
     let query = {};
@@ -44,6 +46,29 @@ export async function GET(request) {
     // Filter by course
     if (course) {
       query.selectedCourse = course;
+    }
+    
+    // Filter by student status
+    if (status) {
+      const currentDate = new Date();
+      
+      switch (status) {
+        case 'active':
+          query.farewellDate = { $gte: currentDate };
+          break;
+        case 'completed':
+          query.farewellDate = { $lt: currentDate };
+          break;
+        case 'certified':
+          query.farewellDate = { $lt: currentDate };
+          query.certificate = true;
+          break;
+      }
+    }
+    
+    // Filter by certified only
+    if (certifiedOnly) {
+      query.certificate = true;
     }
 
     // Calculate skip for pagination
@@ -197,6 +222,78 @@ export async function DELETE(request) {
     console.error('Error deleting student:', error);
     return NextResponse.json(
       { success: false, message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// New endpoint to get student statistics
+export async function GET_STATS() {
+  try {
+    await connectToDatabase();
+    
+    const currentDate = new Date();
+    
+    // Get counts for different student statuses
+    const totalStudents = await registered_students.countDocuments();
+    const activeStudents = await registered_students.countDocuments({ 
+      farewellDate: { $gte: currentDate } 
+    });
+    const completedStudents = await registered_students.countDocuments({ 
+      farewellDate: { $lt: currentDate } 
+    });
+    const certifiedStudents = await registered_students.countDocuments({ 
+      farewellDate: { $lt: currentDate },
+      certificate: true 
+    });
+    
+    // Get course-wise statistics
+    const courseStats = await registered_students.aggregate([
+      {
+        $group: {
+          _id: '$selectedCourse',
+          total: { $sum: 1 },
+          active: {
+            $sum: {
+              $cond: [{ $gte: ['$farewellDate', currentDate] }, 1, 0]
+            }
+          },
+          completed: {
+            $sum: {
+              $cond: [{ $lt: ['$farewellDate', currentDate] }, 1, 0]
+            }
+          },
+          certified: {
+            $sum: {
+              $cond: [
+                { $and: [
+                  { $lt: ['$farewellDate', currentDate] },
+                  { $eq: ['$certificate', true] }
+                ]},
+                1,
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+    
+    return NextResponse.json({
+      success: true,
+      data: {
+        totalStudents,
+        activeStudents,
+        completedStudents,
+        certifiedStudents,
+        courseStats
+      }
+    }, { status: 200 });
+    
+  } catch (error) {
+    console.error('Error fetching student statistics:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal Server Error' },
       { status: 500 }
     );
   }

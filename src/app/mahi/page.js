@@ -16,8 +16,9 @@ import {
   FaTimes, FaHome, FaChartLine, FaCog, FaUserShield, FaImages,
   FaBook, FaVideo, FaTrophy, 
 } from 'react-icons/fa';
-import { IoPersonAdd } from "react-icons/io5";
+import { MdOutlineReviews } from "react-icons/md";
 import { BsFillPersonLinesFill } from "react-icons/bs";
+import { TbHelpOctagon } from "react-icons/tb";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -86,6 +87,9 @@ const AdminDashboard = () => {
   }, []);
 
   const actionCards = [
+
+    // 1
+
     { 
       id: 'Manage Students', 
       title: 'Manage Students', 
@@ -95,24 +99,46 @@ const AdminDashboard = () => {
       textColor: 'text-blue-800',
       path: '/mahi/students/manageStudents'
     },
+
+    // 2
+
     { 
-      id: 'add-student', 
-      title: 'Add Student', 
-      icon: <FaUserGraduate className="text-4xl" />,
-      bgColor: 'bg-white',
+      id: 'edit-online-course-student', 
+      title: 'Edit Online Courses students', 
+      icon: <FaVideo className="text-4xl" />,
+      bgColor: 'bg-purple-200',
+      hoverBgColor: 'bg-green-50',
+      textColor: 'text-blue-800',
+      path: '/mahi/onlineCourseStudents'
+    },
+
+    //3
+
+    { 
+      id: 'edit-staff', 
+      title: 'Edit Staff', 
+      icon: <FaChalkboardTeacher className="text-4xl" />,
+      bgColor: 'bg-green-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/skillup/students/add-student'
+      path: '/mahi/staff/editStaff'
     },
+
+
+    //4
+
     { 
-      id: 'edit-student', 
-      title: 'Edit Student', 
-      icon: <FaEdit className="text-4xl" />,
-      bgColor: 'bg-white',
+      id: 'ManageFees', 
+      title: 'Manage Fees', 
+      icon: <FaMoneyBillWave className="text-4xl" />,
+      bgColor: 'bg-orange-100',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/mahi/students/editStudent'
+      path: '/mahi/students/fees'
     },
+
+    //5
+
     { 
       id: 'certificates', 
       title: 'Certificates', 
@@ -122,6 +148,9 @@ const AdminDashboard = () => {
       textColor: 'text-blue-800',
       path: '/skillup/certificate'
     },
+
+    //6
+    
     { 
       id: 'edit-achievements', 
       title: 'Edit Achievements', 
@@ -131,24 +160,20 @@ const AdminDashboard = () => {
       textColor: 'text-blue-800',
       path: '/mahi/achievements'
     },
-    { 
-      id: 'add-admin', 
-      title: 'Add Admin', 
-      icon: <FaUserShield className="text-4xl" />,
-      bgColor: 'bg-orange-200',
-      hoverBgColor: 'bg-blue-50',
-      textColor: 'text-blue-800',
-      path: '/mahi/register'
-    },
-    { 
+
+    // 7
+        { 
       id: 'edit-gallery', 
       title: 'Edit Gallery', 
       icon: <FaImages className="text-4xl" />,
-      bgColor: 'bg-green-200',
+      bgColor: 'bg-blue-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/mahi/gallery/editGallery'
     },
+
+    // 8
+
     { 
       id: 'add-resources', 
       title: 'Edit Resources', 
@@ -158,6 +183,9 @@ const AdminDashboard = () => {
       textColor: 'text-blue-800',
       path: '/mahi/eduResources'
     },
+
+    // 9
+
     { 
       id: 'edit-courses', 
       title: 'Edit Online Courses students', 
@@ -167,34 +195,43 @@ const AdminDashboard = () => {
       textColor: 'text-blue-800',
       path: '/mahi/onlineCourseStudents'
     },
+
+    // 10
+
     { 
-      id: 'edit-online-course', 
-      title: 'Edit Online Course', 
-      icon: <BsFillPersonLinesFill className="text-4xl" />,
-      bgColor: 'bg-yellow-100',
+      id: 'add-admin', 
+      title: 'Add Admin', 
+      icon: <FaUserShield className="text-4xl" />,
+      bgColor: 'bg-orange-200',
+      hoverBgColor: 'bg-blue-50',
+      textColor: 'text-blue-800',
+      path: '/mahi/register'
+    },
+
+    //11
+
+    { 
+      id: 'edit-review', 
+      title: 'Edit Reviews', 
+      icon: <MdOutlineReviews className="text-4xl" />,
+      bgColor: 'bg-green-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/mahi/onlineCourse'
     },
+
+     // 12
+
      { 
-      id: 'Add Staff', 
-      title: 'Add Staff', 
-      icon: <IoPersonAdd className="text-4xl" />,
-      bgColor: 'bg-blue-200',
+      id: 'get-help', 
+      title: 'Get Help', 
+      icon: <TbHelpOctagon className="text-4xl" />,
+      bgColor: 'bg-yellow-100',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/mahi/staff/addstaff'
+      path: '/mahi/getHelp'
     },
-    { 
-      id: 'edit staff', 
-      title: 'Edit Staff', 
-      icon: <FaChalkboardTeacher className="text-4xl" />,
-      bgColor: 'bg-purple-200',
-      hoverBgColor: 'bg-blue-50',
-      textColor: 'text-blue-800',
-      path: '/mahi/staff/editStaff'
-    },
-   
+
   ];
 
   const handlePrevMonth = () => {
