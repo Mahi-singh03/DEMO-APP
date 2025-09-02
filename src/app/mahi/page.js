@@ -19,6 +19,7 @@ import {
 import { MdOutlineReviews } from "react-icons/md";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { TbHelpOctagon } from "react-icons/tb";
+import { MdVideoLibrary } from "react-icons/md";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -188,12 +189,12 @@ const AdminDashboard = () => {
 
     { 
       id: 'edit-courses', 
-      title: 'Edit Online Courses students', 
-      icon: <FaVideo className="text-4xl" />,
+      title: 'Edit Online Courses', 
+      icon: <MdVideoLibrary className="text-4xl" />,
       bgColor: 'bg-purple-200',
       hoverBgColor: 'bg-green-50',
       textColor: 'text-blue-800',
-      path: '/mahi/onlineCourseStudents'
+      path: '/mahi/onlineCourse'
     },
 
     // 10
@@ -217,7 +218,7 @@ const AdminDashboard = () => {
       bgColor: 'bg-green-200',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/mahi/onlineCourse'
+      path: '/mahi/review'
     },
 
      // 12
