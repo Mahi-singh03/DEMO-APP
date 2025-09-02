@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
-import { Storage } from 'megajs';
+import { uploadToMega } from '@/lib/megaStorage';
 import connectDB from '@/lib/DBconnection';
 import Resource from '@/models/books';
 
@@ -28,31 +28,11 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Title and PDF file are required' }, { status: 400 });
     }
 
-    // Connect to MEGA
-    const storage = new Storage({
-      email: process.env.MEGA_EMAIL,
-      password: process.env.MEGA_PASSWORD,
-    });
-    
-    await new Promise((resolve, reject) => {
-      storage.on('ready', resolve);
-      storage.on('error', reject);
-    });
-
-    // Upload PDF to MEGA
+    // Upload PDF to MEGA using the utility function
     const pdfBuffer = Buffer.from(await pdfFile.arrayBuffer());
-    const uploadStream = storage.upload(pdfFile.name, pdfBuffer);
+    const uploadResult = await uploadToMega(pdfBuffer, pdfFile.name);
     
-    let uploadedFile;
-    await new Promise((resolve, reject) => {
-      uploadStream.on('complete', (file) => {
-        uploadedFile = file;
-        resolve();
-      });
-      uploadStream.on('error', reject);
-    });
-    
-    const pdfUrl = await uploadedFile.link();
+    const pdfUrl = uploadResult.url;
     const pdfLink = pdfUrl;
 
     // Handle cover photo upload to Cloudinary

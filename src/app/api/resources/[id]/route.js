@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
-import { Storage } from 'megajs';
+import { uploadToMega } from '@/lib/megaStorage';
 import connectDB from '@/lib/DBconnection';
 import Resource from '@/models/books';
 
@@ -36,32 +36,12 @@ export async function PUT(req, { params }) {
 
     // Handle PDF update
     if (pdfFile) {
-      // Connect to MEGA
-      const storage = new Storage({
-        email: process.env.MEGA_EMAIL,
-        password: process.env.MEGA_PASSWORD,
-      });
-      
-      await new Promise((resolve, reject) => {
-        storage.on('ready', resolve);
-        storage.on('error', reject);
-      });
-
-      // Upload new PDF to MEGA
+      // Upload new PDF to MEGA using the utility function
       const pdfBuffer = Buffer.from(await pdfFile.arrayBuffer());
-      const uploadStream = storage.upload(pdfFile.name, pdfBuffer);
+      const uploadResult = await uploadToMega(pdfBuffer, pdfFile.name);
       
-      let uploadedFile;
-      await new Promise((resolve, reject) => {
-        uploadStream.on('complete', (file) => {
-          uploadedFile = file;
-          resolve();
-        });
-        uploadStream.on('error', reject);
-      });
-      
-      resource.pdfUrl = await uploadedFile.link();
-      resource.pdfLink = resource.pdfUrl;
+      resource.pdfUrl = uploadResult.url;
+      resource.pdfLink = uploadResult.url;
     }
 
     // Handle cover photo update

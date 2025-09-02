@@ -234,7 +234,18 @@ const EditStaff = () => {
   };
 
   if (isLoading) return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50">
+    <div 
+      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 backdrop-blur-sm"
+      style={{
+        backgroundImage: `
+          radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 40% 40%, rgba(120, 200, 255, 0.2) 0%, transparent 50%)
+        `,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)'
+      }}
+    >
       <div className="w-full max-w-4xl">
         <div className="animate-pulse space-y-6">
           <div className="h-10 bg-gray-200 rounded w-1/3 mb-8"></div>
@@ -260,7 +271,16 @@ const EditStaff = () => {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50"
+      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 backdrop-blur-sm"
+      style={{
+        backgroundImage: `
+          radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 40% 40%, rgba(120, 200, 255, 0.2) 0%, transparent 50%)
+        `,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)'
+      }}
     >
       <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-6 max-w-md w-full rounded-lg shadow-sm">
         <div className="flex items-start">
@@ -292,7 +312,16 @@ const EditStaff = () => {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50"
+      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 backdrop-blur-sm"
+      style={{
+        backgroundImage: `
+          radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 40% 40%, rgba(120, 200, 255, 0.2) 0%, transparent 50%)
+        `,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)'
+      }}
     >
       <div className="bg-white p-6 rounded-lg shadow-sm text-center max-w-md w-full">
         <FiAlertCircle className="w-16 h-16 mx-auto text-gray-400" />
@@ -313,7 +342,16 @@ const EditStaff = () => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 py-8 px-4 sm:px-6 lg:px-8"
+      className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 py-8 px-4 sm:px-6 lg:px-8 backdrop-blur-sm"
+      style={{
+        backgroundImage: `
+          radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 40% 40%, rgba(120, 200, 255, 0.2) 0%, transparent 50%)
+        `,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)'
+      }}
     >
       <div className="max-w-4xl mx-auto">
         <motion.header variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -344,7 +382,7 @@ const EditStaff = () => {
 
         <motion.div 
           variants={itemVariants}
-          className="bg-white rounded-xl shadow-lg overflow-hidden transition-colors duration-300 border border-gray-200"
+          className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg overflow-hidden transition-colors duration-300 border border-gray-200/50"
         >
           <form onSubmit={handleSubmit} className="p-6" ref={formRef}>
             <AnimatePresence>
@@ -529,7 +567,7 @@ const EditStaff = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-blur bg-opacity-40 backdrop-blur-sm flex items-center justify-center p-4 z-50"
           >
             <motion.div 
               variants={modalVariants}

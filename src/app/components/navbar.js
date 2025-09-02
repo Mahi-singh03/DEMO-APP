@@ -39,8 +39,8 @@ const dropdowns = [
   {
     name: "Job",
     options: [
-      { name: "Career Guidance", path: "/Job/Career-Guidance" },
-      { name: "Job Apply", path: "/Job/Job-Apply" },
+      { name: "Career Guidance", path: "/job/jobApply" },
+      { name: "Job Apply", path: "/job/jobApply" },
     ],
   },
 ];

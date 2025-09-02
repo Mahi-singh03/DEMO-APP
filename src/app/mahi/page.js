@@ -20,6 +20,7 @@ import { MdOutlineReviews } from "react-icons/md";
 import { BsFillPersonLinesFill } from "react-icons/bs";
 import { TbHelpOctagon } from "react-icons/tb";
 import { MdVideoLibrary } from "react-icons/md";
+import { TbFileCv } from "react-icons/tb";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -223,7 +224,22 @@ const AdminDashboard = () => {
 
      // 12
 
-     { 
+   
+
+    {
+      id: 'job-candidate', 
+      title: 'Job Candidate', 
+      icon: <TbFileCv className="text-5xl" />,
+      bgColor: 'bg-red-200',
+      hoverBgColor: 'bg-blue-50',
+      textColor: 'text-blue-800',
+      path: '/mahi/job'
+    },
+
+
+    // 13
+
+    { 
       id: 'get-help', 
       title: 'Get Help', 
       icon: <TbHelpOctagon className="text-4xl" />,
