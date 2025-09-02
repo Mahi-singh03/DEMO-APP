@@ -56,6 +56,15 @@ export default function StudentDetail() {
     return new Date(date.setMonth(date.getMonth() + monthsToAdd));
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    return `${day}-${month}-${year}`;
+  };
+
   const generateCertificationTitle = (course, duration) => {
     if (course === 'Computer Course') {
       switch (duration) {
@@ -469,11 +478,11 @@ export default function StudentDetail() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Joining Date:</p>
-                  <p className="font-medium">{new Date(student.joiningDate).toLocaleDateString()}</p>
+                  <p className="font-medium">{formatDate(student.joiningDate)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Completion Date:</p>
-                  <p className="font-medium">{new Date(student.farewellDate).toLocaleDateString()}</p>
+                  <p className="font-medium">{formatDate(student.farewellDate)}</p>
                 </div>
               </div>
             </div>
@@ -573,7 +582,7 @@ export default function StudentDetail() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       />
                     ) : (
-                      <p className="px-4 py-2 bg-gray-50 rounded-lg">{new Date(student.dateOfBirth).toLocaleDateString()}</p>
+                      <p className="px-4 py-2 bg-gray-50 rounded-lg">{formatDate(student.dateOfBirth)}</p>
                     )}
                   </div>
                   
@@ -771,7 +780,7 @@ export default function StudentDetail() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       />
                     ) : (
-                      <p className="px-4 py-2 bg-gray-50 rounded-lg">{new Date(student.joiningDate).toLocaleDateString()}</p>
+                      <p className="px-4 py-2 bg-gray-50 rounded-lg">{formatDate(student.joiningDate)}</p>
                     )}
                   </div>
                   
@@ -785,7 +794,7 @@ export default function StudentDetail() {
                         className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg"
                       />
                     ) : (
-                      <p className="px-4 py-2 bg-gray-50 rounded-lg">{new Date(student.farewellDate).toLocaleDateString()}</p>
+                      <p className="px-4 py-2 bg-gray-50 rounded-lg">{formatDate(student.farewellDate)}</p>
                     )}
                   </div>
                   

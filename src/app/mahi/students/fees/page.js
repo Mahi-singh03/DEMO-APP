@@ -19,6 +19,16 @@ const StudentManagementDashboard = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   
+  // Date formatting function
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    return `${day}-${month}-${year}`;
+  };
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -969,7 +979,7 @@ const StudentManagementDashboard = () => {
                       <div className="mt-3">
                         <p className="text-gray-600">Farewell Date:</p>
                         <p className="font-medium">
-                          {new Date(selectedStudent.farewellDate).toLocaleDateString()}
+                          {formatDate(selectedStudent.farewellDate)}
                         </p>
                       </div>
                     )}
@@ -987,7 +997,7 @@ const StudentManagementDashboard = () => {
                             <div>
                               <p className="font-medium">Installment {index + 1}</p>
                               <p className="text-sm text-gray-600">
-                                Due: {new Date(installment.submissionDate).toLocaleDateString()}
+                                Due: {formatDate(installment.submissionDate)}
                               </p>
                             </div>
                             
@@ -1038,7 +1048,7 @@ const StudentManagementDashboard = () => {
                               <p className="text-sm font-medium text-gray-700">Payment History:</p>
                               {installment.payments.map((payment, paymentIndex) => (
                                 <div key={paymentIndex} className="flex justify-between text-xs text-gray-600 mt-1">
-                                  <span>₹{payment.amount} on {new Date(payment.date).toLocaleDateString()}</span>
+                                  <span>₹{payment.amount} on {formatDate(payment.date)}</span>
                                   <span>{payment.method}</span>
                                 </div>
                               ))}
