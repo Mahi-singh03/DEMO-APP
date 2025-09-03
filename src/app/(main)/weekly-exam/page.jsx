@@ -4,6 +4,7 @@ import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { UserContext } from "@/app/components/userContext";
+import FeeStatusMonitor from "@/app/components/FeeStatusMonitor";
 
 
 const exams = [
@@ -29,9 +30,10 @@ const exams = [
 ];
 
 export default function ExamList() {
-  const { isAuthenticated, loading } = useContext(UserContext);
+  const { isAuthenticated, loading, isAdmin, user, checkFeeStatus } = useContext(UserContext);
   const router = useRouter();
   const [verified, setVerified] = useState(false);
+  const [accessGranted, setAccessGranted] = useState(false);
 
   useEffect(() => {
     const checkToken = async () => {
@@ -72,6 +74,21 @@ export default function ExamList() {
     }
   }, [loading, isAuthenticated, router]);
 
+  const handleAccessGranted = (granted) => {
+    setAccessGranted(granted);
+  };
+
+  // Additional safety check for completed courses
+  useEffect(() => {
+    if (user && !isAdmin && checkFeeStatus) {
+      const feeStatus = checkFeeStatus();
+      // If course is completed, always block access regardless of other conditions
+      if (feeStatus && feeStatus.type === 'courseCompleted') {
+        setAccessGranted(false);
+      }
+    }
+  }, [user, isAdmin, checkFeeStatus]);
+
   if (loading || !verified) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -81,40 +98,91 @@ export default function ExamList() {
   }
 
   return (
-    <div className="min-h-screen bg-[#e3f1f1] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold text-blue-600 mb-2">
-            Available Weekly Exams
-          </h1>
-        </div>
+    <>
+      {/* Fee Status Monitor - shows popups for fee issues */}
+      {!isAdmin && (
+        <FeeStatusMonitor onAccessGranted={handleAccessGranted} />
+      )}
 
-        <div className="space-y-4">
-          {exams.map((exam) => (
-            <Link
-              key={exam.id}
-              href={exam.path}
-              className="block group transition-transform duration-200 hover:scale-[1.02]"
-            >
-              <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-500 hover:border-blue-600 transition-colors duration-200 group-hover:shadow-lg">
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                  {exam.title}
-                </h3>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Exam Number: {exam.id}</span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Start Exam
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+      <div className="min-h-screen bg-[#ddedf1] py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+           
+            {!isAdmin && !accessGranted && (
+              <p className="text-sm text-orange-600 mt-2">
+                Please resolve any fee-related issues to access exams
+              </p>
+            )}
+          </div>
 
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>These tests help you to improve the knowledge of Computer</p>
+          {/* Show exams only if admin or access is granted */}
+          {(isAdmin || accessGranted) ? (
+            <div className="space-y-4">
+               <h1 className="text-3xl sm:text-4xl text-center pb-10 font-bold text-blue-600 mb-2">
+              Available Weekly Exams
+               </h1>
+              {exams.map((exam) => (
+                <Link
+                  key={exam.id}
+                  href={exam.path}
+                  className="block group transition-transform duration-200 hover:scale-[1.02]"
+                >
+                  <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-500 hover:border-blue-600 transition-colors duration-200 group-hover:shadow-lg">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                      {exam.title}
+                    </h3>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500">Exam Number: {exam.id}</span>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Start Exam
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🔒</div>
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">Access Restricted</h2>
+              {user && checkFeeStatus && (() => {
+                const feeStatus = checkFeeStatus();
+                if (feeStatus && feeStatus.type === 'courseCompleted') {
+                  return (
+                    <>
+                      <p className="text-gray-600 mb-4">
+                        Your course has been completed. You can no longer access weekly exams.
+                      </p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-500">• Course: {feeStatus.data.courseName}</p>
+                        <p className="text-sm text-gray-500">• Completed on: {new Date(feeStatus.data.farewellDate).toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-500">• Contact support for certificate or records</p>
+                      </div>
+                    </>
+                  );
+                } else {
+                  return (
+                    <>
+                      <p className="text-gray-600 mb-4">
+                        Please resolve any fee-related issues to access the weekly exams.
+                      </p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-500">• Check for overdue payments</p>
+                        <p className="text-sm text-gray-500">• Ensure fee structure is set up</p>
+                        <p className="text-sm text-gray-500">• Contact support if needed</p>
+                      </div>
+                    </>
+                  );
+                }
+              })()}
+            </div>
+          )}
+
+          <div className="mt-8 text-center text-sm text-gray-500">
+            <p>These tests help you to improve the knowledge of Computer</p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
