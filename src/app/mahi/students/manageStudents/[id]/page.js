@@ -370,7 +370,7 @@ export default function StudentDetail() {
             Back to Students
           </Link>
           
-          <h1 className="text-3xl font-bold text-gray-900">Student Details</h1>
+          <h1 className="text-3xl font-bold text-blue-400">Student Details</h1>
           
           <div className="flex flex-wrap gap-2">
             <button 

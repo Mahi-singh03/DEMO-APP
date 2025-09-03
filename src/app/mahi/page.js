@@ -224,13 +224,12 @@ const AdminDashboard = () => {
 
      // 12
 
-   
 
     {
       id: 'job-candidate', 
       title: 'Job Candidate', 
       icon: <TbFileCv className="text-5xl" />,
-      bgColor: 'bg-red-200',
+      bgColor: 'bg-yellow-100',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
       path: '/mahi/job'

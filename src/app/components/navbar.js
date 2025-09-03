@@ -39,7 +39,7 @@ const dropdowns = [
   {
     name: "Job",
     options: [
-      { name: "Career Guidance", path: "/job/jobApply" },
+      
       { name: "Job Apply", path: "/job/jobApply" },
     ],
   },
@@ -167,7 +167,7 @@ const Navbar = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100"
+                    className="absolute left-0 mt-2 w-43 bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100"
                   >
                     {dropdown.options.map((option) => (
                       <Link

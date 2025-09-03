@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Admin Section",
-  description: "Best Computer Skills Training Institute in Garhshankar, Punjab",
+  description: "Admin Section",
 };
 
 export default function RootLayout({ children }) {
