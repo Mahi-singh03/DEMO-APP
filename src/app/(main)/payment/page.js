@@ -94,10 +94,10 @@ export default function PaymentPage() {
               Your fee structure has not been set up yet. Please contact the fees manager to set up your payment plan.
             </p>
             <button
-              onClick={() => router.push("/contact")}
+              onClick={() => router.push("/home")}
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200"
             >
-              Contact Support
+              Go Home
             </button>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState, useContext, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, ChevronDown, User, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserContext } from "./userContext";
@@ -57,7 +57,7 @@ const secondaryMenuItems = (isAuthenticated) => [
   { name: "About", path: "/about" },
   { name: "Gallery", path: "/gallery" },
   { name: "Achievements", path: "/achievements" },
-  ...(isAuthenticated ? [{ name: "Logout", path: "#" }] : []),
+  ...(isAuthenticated ? [{ name: "Logout", path: "/home" }] : []),
 ];
 
 const isActivePath = (currentPath, targetPath, exact = true) => {
@@ -73,13 +73,30 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [hoveredDropdown, setHoveredDropdown] = useState(null);
-  const { isAuthenticated, logout, loading, initializeAuth } = useContext(UserContext);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  const { isAuthenticated, logout, loading, initializeAuth, user, refreshKey } = useContext(UserContext);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     setIsOpen(false);
     setActiveDropdown(null);
   }, [pathname]);
+
+  // Force re-render when authentication state changes
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [isAuthenticated, user, refreshKey]);
+
+  // Listen for custom auth events
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setForceUpdate(prev => prev + 1);
+    };
+
+    window.addEventListener('authStateChanged', handleAuthChange);
+    return () => window.removeEventListener('authStateChanged', handleAuthChange);
+  }, []);
 
   if (loading) {
     return <div className="fixed top-0 left-0 w-full h-16 bg-white shadow-md z-50"></div>;
@@ -88,6 +105,9 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
     setIsOpen(false);
+    // Force immediate re-render
+    setForceUpdate(prev => prev + 1);
+    router.push('/login');
   };
 
   const handleDropdownClick = (name) => {

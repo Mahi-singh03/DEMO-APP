@@ -59,10 +59,19 @@ export default function ResourceLibrary() {
       }
     };
 
-    if (!loading && isAuthenticated) {
-      checkToken();
-    } else if (!loading && !isAuthenticated) {
-      router.push("/login");
+    // Only check token if we have a token and are not loading
+    if (!loading) {
+      if (isAuthenticated) {
+        checkToken();
+      } else {
+        // If not authenticated, check if we have a token in localStorage
+        const token = localStorage.getItem("token");
+        if (token) {
+          checkToken();
+        } else {
+          router.push("/login");
+        }
+      }
     }
   }, [loading, isAuthenticated, router]);
 

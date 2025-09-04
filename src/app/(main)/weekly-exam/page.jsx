@@ -85,7 +85,16 @@ export default function ExamList() {
       // If course is completed, always block access regardless of other conditions
       if (feeStatus && feeStatus.type === 'courseCompleted') {
         setAccessGranted(false);
+      } else if (feeStatus && (feeStatus.type === 'overdueInstallment' || feeStatus.type === 'noFeeSetup')) {
+        // Block access for overdue payments or missing fee setup
+        setAccessGranted(false);
+      } else {
+        // Allow access for other cases (including upcoming installments)
+        setAccessGranted(true);
       }
+    } else if (isAdmin) {
+      // Always allow admin access
+      setAccessGranted(true);
     }
   }, [user, isAdmin, checkFeeStatus]);
 

@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useState, useEffect, useCallback } from "react";
+import { createContext, useState, useEffect, useCallback, useMemo } from "react";
 
 export const UserContext = createContext();
 
@@ -11,6 +11,7 @@ export function UserProvider({ children }) {
     loading: true
   });
   const [isInitialized, setIsInitialized] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Initialize auth state from storage
   const initializeAuth = useCallback(() => {
@@ -122,7 +123,7 @@ export function UserProvider({ children }) {
       });
       setIsInitialized(true);
     }
-  }, [isInitialized]);
+  }, []);
 
   useEffect(() => {
     initializeAuth();
@@ -141,12 +142,23 @@ export function UserProvider({ children }) {
         localStorage.removeItem("adminToken"); // Clear admin token if exists
       }
 
-      setAuthState({
+      const newAuthState = {
         user: userData || { isAdmin: true },
         isAuthenticated: true,
         isAdmin: isAdminLogin,
         loading: false
-      });
+      };
+      
+      setAuthState(newAuthState);
+      setIsInitialized(true);
+      setRefreshKey(prev => prev + 1);
+      
+      // Force immediate re-render
+      setTimeout(() => {
+        setAuthState(prev => ({ ...prev }));
+        // Dispatch custom event for navbar
+        window.dispatchEvent(new CustomEvent('authStateChanged'));
+      }, 0);
     } catch (error) {
       console.error("Login error:", error);
       setAuthState(prev => ({ ...prev, loading: false }));
@@ -161,13 +173,25 @@ export function UserProvider({ children }) {
     localStorage.removeItem("onlineCourseUserToken")
     localStorage.removeItem("nextauth.message")
     localStorage.removeItem("adminData")
-    setAuthState({
+    
+    const newAuthState = {
       user: null,
       isAuthenticated: false,
       isAdmin: false,
       loading: false
-    });
+    };
+    
+    // Reset all state to ensure proper re-render
+    setAuthState(newAuthState);
     setIsInitialized(false);
+    setRefreshKey(prev => prev + 1);
+    
+    // Force immediate re-render
+    setTimeout(() => {
+      setAuthState(prev => ({ ...prev }));
+      // Dispatch custom event for navbar
+      window.dispatchEvent(new CustomEvent('authStateChanged'));
+    }, 0);
   }, []);
 
   // Check fee status and course completion
@@ -183,16 +207,18 @@ export function UserProvider({ children }) {
         type: 'courseCompleted',
         data: {
           farewellDate: user.farewellDate,
-          courseName: user.selectedCourse
+          courseName: user.selectedCourse || 'Course'
         }
       };
     }
 
-    // Check if fee details exist
+    // If no fee details exist, block access and require fee setup
     if (!user.feeDetails || !user.feeDetails.installmentDetails || user.feeDetails.installmentDetails.length === 0) {
       return {
         type: 'noFeeSetup',
-        data: {}
+        data: {
+          message: 'Your fee structure has not been set up yet. Please contact the fees manager to set up your payment plan before accessing exams.'
+        }
       };
     }
 
@@ -210,12 +236,12 @@ export function UserProvider({ children }) {
         data: {
           installment: overdueInstallments[0],
           totalOverdue: overdueInstallments.length,
-          totalAmount: overdueInstallments.reduce((sum, inst) => sum + inst.amount, 0)
+          totalAmount: overdueInstallments.reduce((sum, inst) => sum + (inst.amount || 0), 0)
         }
       };
     }
 
-    // Check for upcoming installments (within 7 days)
+    // Check for upcoming installments (within 7 days) - but don't block access
     const upcomingInstallments = user.feeDetails.installmentDetails
       .filter(installment => {
         const dueDate = new Date(installment.submissionDate);
@@ -237,15 +263,18 @@ export function UserProvider({ children }) {
     return null; // All good
   }, [authState.user, authState.isAdmin]);
 
+  const contextValue = useMemo(() => ({
+    ...authState,
+    login, 
+    logout,
+    initializeAuth,
+    checkFeeStatus,
+    fetchCompleteStudentData,
+    refreshKey
+  }), [authState, login, logout, initializeAuth, checkFeeStatus, fetchCompleteStudentData, refreshKey]);
+
   return (
-    <UserContext.Provider value={{ 
-      ...authState,
-      login, 
-      logout,
-      initializeAuth,
-      checkFeeStatus,
-      fetchCompleteStudentData
-    }}>
+    <UserContext.Provider value={contextValue}>
       {children}
     </UserContext.Provider>
   );

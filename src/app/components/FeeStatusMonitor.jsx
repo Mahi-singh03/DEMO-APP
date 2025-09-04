@@ -30,6 +30,14 @@ const FeeStatusMonitor = ({ onAccessGranted }) => {
       setPopupType(feeStatus.type);
       setPopupData(feeStatus.data);
       setShowPopup(true);
+      
+      // Only block access for specific critical issues
+      if (feeStatus.type === 'courseCompleted' || feeStatus.type === 'overdueInstallment' || feeStatus.type === 'noFeeSetup') {
+        if (onAccessGranted) onAccessGranted(false);
+      } else {
+        // Allow access for other issues like upcoming installments
+        if (onAccessGranted) onAccessGranted(true);
+      }
     } else {
       // All good, grant access
       if (onAccessGranted) onAccessGranted(true);
@@ -50,7 +58,7 @@ const FeeStatusMonitor = ({ onAccessGranted }) => {
         break;
       case 'noFeeSetup':
         // Redirect to contact page or show message
-        router.push('/contact');
+        router.push('/home');
         break;
       case 'courseCompleted':
         // For course completed, just close the popup but NEVER grant access
@@ -95,7 +103,7 @@ const FeeStatusMonitor = ({ onAccessGranted }) => {
         return {
           title: 'Fee Setup Required',
           message: 'Your fee structure has not been set up yet. Please contact the fees manager to set up your payment plan before accessing exams.',
-          buttonText: 'Contact Support',
+          buttonText: 'Go Home',
           icon: '📋',
           color: 'orange'
         };

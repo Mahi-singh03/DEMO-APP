@@ -77,22 +77,60 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
+    // Check for authentication token
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authorization token required' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Verify JWT token
+    const jwt = require('jsonwebtoken');
+    try {
+      jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
     await connectDB();
     const { searchParams } = new URL(req.url);
     const name = searchParams.get('name');
     const category = searchParams.get('category');
+    const page = parseInt(searchParams.get('page')) || 1;
+    const limit = parseInt(searchParams.get('limit')) || 9;
+    const skip = (page - 1) * limit;
 
-    let resources;
+    let query = {};
     if (name) {
-      resources = await Resource.find({ $text: { $search: name } });
+      query = { $text: { $search: name } };
     } else if (category) {
-      resources = await Resource.find({ category });
-    } else {
-      resources = await Resource.find({});
+      query = { category };
     }
 
-    return NextResponse.json(resources);
+    const totalResources = await Resource.countDocuments(query);
+    const resources = await Resource.find(query)
+      .skip(skip)
+      .limit(limit)
+      .sort({ publishedDate: -1 });
+
+    const totalPages = Math.ceil(totalResources / limit);
+
+    return NextResponse.json({
+      resources,
+      totalResources,
+      totalPages,
+      currentPage: page,
+      limit
+    });
   } catch (error) {
+    console.error('Error fetching resources:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

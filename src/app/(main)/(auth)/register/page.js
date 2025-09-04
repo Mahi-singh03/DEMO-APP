@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/navigation';
+import { UserContext } from '../../../components/userContext';
 import dayjs from 'dayjs';
 
 // Helper to format date as DD-MM-YYYY
@@ -11,6 +12,7 @@ const formatDate = (dateStr) => {
 
 const StudentRegistrationForm = () => {
   const router = useRouter();
+  const { login, isAuthenticated } = useContext(UserContext);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
@@ -35,6 +37,12 @@ const StudentRegistrationForm = () => {
   const [touched, setTouched] = useState({});
 
   useEffect(() => {
+    // If already authenticated, redirect to profile
+    if (isAuthenticated) {
+      router.replace('/profile');
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (token) {
       fetch('/api/auth/verify', {
@@ -48,7 +56,7 @@ const StudentRegistrationForm = () => {
         }
       });
     }
-  }, [router]);
+  }, [router, isAuthenticated]);
 
   const handleBlur = (e) => {
     const { name } = e.target;
@@ -190,8 +198,8 @@ const StudentRegistrationForm = () => {
       }
 
       const data = errorData;
-      localStorage.setItem('user', JSON.stringify(data.student));
-      localStorage.setItem('token', data.token);
+      // Use the context login function to update authentication state
+      login(data.student, false, data.token);
       router.push('/profile');
     } catch (error) {
       console.error('Registration error:', error);
