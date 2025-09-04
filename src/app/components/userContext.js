@@ -10,9 +10,15 @@ export function UserProvider({ children }) {
     isAdmin: false,
     loading: true
   });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize auth state from storage
   const initializeAuth = useCallback(() => {
+    // Don't reinitialize if already initialized
+    if (isInitialized) {
+      return;
+    }
+    
     setAuthState(prev => ({ ...prev, loading: true }));
     
     try {
@@ -28,6 +34,7 @@ export function UserProvider({ children }) {
           isAdmin: true,
           loading: false
         });
+        setIsInitialized(true);
       } else if (userToken) {
         // Regular user authentication - fetch complete student data
         const userData = storedUser ? JSON.parse(storedUser) : null;
@@ -41,6 +48,7 @@ export function UserProvider({ children }) {
             isAdmin: false,
             loading: false
           });
+          setIsInitialized(true);
         }
       } else {
         // No authentication found
@@ -50,6 +58,7 @@ export function UserProvider({ children }) {
           isAdmin: false,
           loading: false
         });
+        setIsInitialized(true);
       }
     } catch (error) {
       console.error("Auth initialization error:", error);
@@ -63,6 +72,7 @@ export function UserProvider({ children }) {
         isAdmin: false,
         loading: false
       });
+      setIsInitialized(true);
     }
   }, []);
 
@@ -86,6 +96,7 @@ export function UserProvider({ children }) {
           isAdmin: false,
           loading: false
         });
+        setIsInitialized(true);
       } else {
         // Fallback to stored data if API fails
         const storedUser = localStorage.getItem("user");
@@ -96,6 +107,7 @@ export function UserProvider({ children }) {
           isAdmin: false,
           loading: false
         });
+        setIsInitialized(true);
       }
     } catch (error) {
       console.error("Error fetching student data:", error);
@@ -108,8 +120,9 @@ export function UserProvider({ children }) {
         isAdmin: false,
         loading: false
       });
+      setIsInitialized(true);
     }
-  }, []);
+  }, [isInitialized]);
 
   useEffect(() => {
     initializeAuth();
@@ -154,6 +167,7 @@ export function UserProvider({ children }) {
       isAdmin: false,
       loading: false
     });
+    setIsInitialized(false);
   }, []);
 
   // Check fee status and course completion
