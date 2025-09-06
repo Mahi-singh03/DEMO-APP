@@ -205,7 +205,7 @@ const Gallery = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white transition-colors duration-300">
+      <div className="min-h-screen flex items-center justify-center bg-[#e3f1f1] transition-colors duration-300">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -261,7 +261,7 @@ const Gallery = () => {
         >
       
                  <motion.h1 
-        className="text-center text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-10"
+        className="text-center text-4xl sm:text-5xl pb-4 font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -310,7 +310,6 @@ const Gallery = () => {
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-end">
                   <div className="p-3 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-full bg-gradient-to-t from-black/80 to-transparent">
-                    <p className="text-sm truncate">{photo.public_id}</p>
                     <p className="text-xs opacity-80">
                       {new Date(photo.created_at).toLocaleDateString()}
                     </p>

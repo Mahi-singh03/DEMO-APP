@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserContext } from '../../../components/userContext';
+import { motion } from 'framer-motion';
+import { UserContext }  from '../../../components/userContext';
 
 const StudentLoginForm = () => {
   const router = useRouter();
@@ -172,9 +173,14 @@ const StudentLoginForm = () => {
   return (
     <div className="min-h-screen bg-[#e3f1f1] flex justify-center p-7">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-center text-4xl sm:text-5xl font-bold text-[#1e90ff]">Student Login</h1>
-        </div>
+        <motion.h1 
+        className="text-center text-4xl pb-1.5 sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-10"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        Student Login
+      </motion.h1>
 
         {errors.general && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { UserContext } from '../../../components/userContext';
 import dayjs from 'dayjs';
 
@@ -514,7 +515,7 @@ const StudentRegistrationForm = () => {
               onChange={handleChange}
               onBlur={handleBlur}
               spellCheck="false"
-              rows自    rows={3}
+              rows={3}
               className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border ${
                 errors.address ? 'border-red-500' : ''
               }`}
@@ -590,11 +591,16 @@ const StudentRegistrationForm = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#e3f1f1] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#e3f1f1] py-8 px-4 sm:px-6 lg:px-10">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-center text-4xl sm:text-5xl font-bold text-[#1e90ff]">Student Registration</h1>
-        </div>
+        <motion.h1 
+        className="text-center text-4xl  pb-1.5 sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-10"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        Student Registration
+      </motion.h1>
 
         {errors.general && (
           <div className="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-md">
