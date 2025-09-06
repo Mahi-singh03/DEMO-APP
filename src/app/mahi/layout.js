@@ -3,6 +3,7 @@ import ScrollToTop from "@/app/components/scrollToTop";
 import { UserProvider } from "@/app/components/userContext"; 
 import ProtectedAdminRoute from "@/app/components/protectedAdminRoute"; 
 import Navbar from "../components/navbar";
+import FloatingDashboardButton from "./components/FloatingDashboardButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +30,8 @@ export default function RootLayout({ children }) {
           <ProtectedAdminRoute>
             <ScrollToTop />
             <Navbar />
-                   <main className="pt-20 md:pt-[135px]">{children}</main>
+            <main className="pt-20 md:pt-[135px]">{children}</main>
+            <FloatingDashboardButton />
           </ProtectedAdminRoute>
         </UserProvider>
       </body>

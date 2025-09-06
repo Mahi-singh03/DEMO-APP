@@ -77,7 +77,7 @@ export default function PaymentPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+      <div className="flex justify-center items-center min-h-screen bg-[#eaf6fe]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -85,7 +85,7 @@ export default function PaymentPage() {
 
   if (!user || !user.feeDetails || !user.feeDetails.installmentDetails) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#eaf6fe] py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
             <div className="text-6xl mb-4">📋</div>
@@ -106,7 +106,7 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#eaf6fe] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-blue-400 mb-2">PENDING INSTALLMENST</h1>
@@ -175,7 +175,7 @@ export default function PaymentPage() {
         </div>
 
         {/* Fee Summary */}
-        <div className="mt-8 bg-white rounded-lg shadow-md p-6">
+        <div className="mt-8 bg-[#eaf6fe] rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Fee Summary</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">

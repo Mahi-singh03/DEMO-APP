@@ -96,7 +96,7 @@ const AchievementsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#eff5ff] text-gray-800 py-12 px-4 sm:px-6 pt-15 lg:px-8">
+    <div className="min-h-screen bg-[#e3f1f1] text-gray-800 py-12 px-4 sm:px-6 pt-15 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div

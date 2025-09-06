@@ -203,7 +203,7 @@ export default function ReviewComponent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#e3f1f1] py-12 px-4 sm:px-6 lg:px-8">
       <Head>
         <title>Customer Reviews</title>
         <meta name="description" content="Share your experience with us" />

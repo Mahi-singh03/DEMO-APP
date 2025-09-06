@@ -41,7 +41,7 @@ export default function StaffVerification() {
   };
 
   return (
-  <div className=" flex  justify-center bg-[#e8efff] p-4 pb-60">
+  <div className=" flex  justify-center bg-[#e3f1f1] p-4 pb-60">
       <Head>
         <title>Staff Verification System</title>
         <link rel="icon" href="/favicon.ico" />

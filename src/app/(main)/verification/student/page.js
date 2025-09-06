@@ -55,7 +55,7 @@ export default function StudentVerification() {
   };
 
   return (
-    <div className=" flex  justify-center bg-[#e8efff] pb-80">
+    <div className=" flex  justify-center bg-[#e3f1f1] pb-80">
       <div className="w-full max-w-3xl bg-white/90 rounded-3xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-3xl mt-8 mb-8 border border-blue-200 backdrop-blur-md">
         <div className="bg-[#51a4f4] p-8 text-white text-center rounded-b-3xl shadow-md">
           <h1 className="text-4xl font-extrabold mb-2 tracking-tight drop-shadow-lg">Student Verification</h1>
@@ -144,7 +144,7 @@ export default function StudentVerification() {
                       <img 
                         src={studentData.data.photo.url} 
                         alt="Student" 
-                        className="w-16 h-16 rounded-full object-cover border-2 border-white"
+                        className="w-30 h-30 rounded-full object-cover border-2 border-white"
                       />
                     </div>
                   ) : (
