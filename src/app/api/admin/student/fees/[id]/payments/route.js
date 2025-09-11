@@ -74,11 +74,40 @@ export async function POST(request, { params }) {
           installment.payments = [];
         }
         
+        // Store original amount if not already stored
+        if (!installment.originalAmount) {
+          installment.originalAmount = installment.amount;
+        }
+        
         installment.payments.push(payment);
         
-        // Check if installment is fully paid
+        // Calculate total paid for this installment
         const totalPaid = installment.payments.reduce((sum, p) => sum + p.amount, 0);
-        installment.paid = totalPaid >= installment.amount;
+        
+        // NEW LOGIC: Mark installment as fully paid if any payment is made
+        // and redistribute the remaining amount to the next installment
+        if (totalPaid > 0 && !installment.paid) {
+          installment.paid = true;
+          
+          // Calculate remaining amount to redistribute
+          const remainingAmount = installment.originalAmount - totalPaid;
+          
+          if (remainingAmount > 0) {
+            // Find the next unpaid installment and add the remaining amount
+            for (let i = installmentIndex + 1; i < student.feeDetails.installmentDetails.length; i++) {
+              const nextInstallment = student.feeDetails.installmentDetails[i];
+              if (!nextInstallment.paid) {
+                // Store original amount if not already stored
+                if (!nextInstallment.originalAmount) {
+                  nextInstallment.originalAmount = nextInstallment.amount;
+                }
+                // Add remaining amount to next installment
+                nextInstallment.amount += remainingAmount;
+                break; // Only add to the next unpaid installment
+              }
+            }
+          }
+        }
       }
     }
 

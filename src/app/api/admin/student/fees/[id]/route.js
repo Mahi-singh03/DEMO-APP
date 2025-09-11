@@ -52,6 +52,7 @@ export async function GET(request, { params }) {
         status: feeStatus,
         installmentDetails: installmentDetails.map(installment => ({
           amount: installment.amount,
+          originalAmount: installment.originalAmount,
           submissionDate: installment.submissionDate,
           paid: installment.paid,
           payments: installment.payments || []
@@ -131,11 +132,13 @@ export async function PUT(request, { params }) {
             // Distribute remaining amount to first installment
             const installmentAmount = index === 0 ? amountPerInstallment + remainingAmount : amountPerInstallment;
             
-            return {
-              amount: installmentAmount,
-              submissionDate,
-              paid: false
-            };
+          return {
+            amount: installmentAmount,
+            originalAmount: installmentAmount,
+            submissionDate,
+            paid: false,
+            payments: []
+          };
           });
         }
       }

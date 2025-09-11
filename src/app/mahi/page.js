@@ -21,6 +21,8 @@ import { BsFillPersonLinesFill } from "react-icons/bs";
 import { TbHelpOctagon } from "react-icons/tb";
 import { MdVideoLibrary } from "react-icons/md";
 import { TbFileCv } from "react-icons/tb";
+import { PiStudentBold } from "react-icons/pi";
+import { FaRegFaceLaugh } from "react-icons/fa6";
 
 
 const AdminDashboard = () => {
@@ -103,7 +105,19 @@ const AdminDashboard = () => {
       path: '/mahi/students/manageStudents'
     },
 
-    // 2
+     // 2
+
+    {
+      id: 'mark-student-attendence', 
+      title: 'Mark Attendence', 
+      icon: <PiStudentBold className="text-5xl" />,
+      bgColor: 'bg-orange-200',
+      hoverBgColor: 'bg-blue-50',
+      textColor: 'text-blue-800',
+      path: '/mahi/attendence/markAttendence'
+    },
+
+     //3
 
     { 
       id: 'edit-online-course-student', 
@@ -115,7 +129,7 @@ const AdminDashboard = () => {
       path: '/mahi/onlineCourseStudents'
     },
 
-    //3
+    //4
 
     { 
       id: 'edit-staff', 
@@ -128,7 +142,7 @@ const AdminDashboard = () => {
     },
 
 
-    //4
+    //5
 
     { 
       id: 'ManageFees', 
@@ -140,7 +154,19 @@ const AdminDashboard = () => {
       path: '/mahi/students/fees'
     },
 
-    //5
+    //6
+
+    { 
+      id: 'add-face', 
+      title: 'Add Face ', 
+      icon: <FaRegFaceLaugh className="text-4xl" />,
+      bgColor: 'bg-yellow-100',
+      hoverBgColor: 'bg-blue-50',
+      textColor: 'text-blue-800',
+      path: '/mahi/attendence/upload-face'
+    },
+
+    //7
 
     { 
       id: 'certificates', 
@@ -152,7 +178,7 @@ const AdminDashboard = () => {
       path: '/skillup/certificate'
     },
 
-    //6
+    //8
     
     { 
       id: 'edit-achievements', 
@@ -164,8 +190,10 @@ const AdminDashboard = () => {
       path: '/mahi/achievements'
     },
 
-    // 7
-        { 
+    // 9
+
+
+    { 
       id: 'edit-gallery', 
       title: 'Edit Gallery', 
       icon: <FaImages className="text-4xl" />,
@@ -175,7 +203,7 @@ const AdminDashboard = () => {
       path: '/mahi/gallery/editGallery'
     },
 
-    // 8
+    // 10
 
     { 
       id: 'add-resources', 
@@ -187,7 +215,7 @@ const AdminDashboard = () => {
       path: '/mahi/eduResources'
     },
 
-    // 9
+    // 11
 
     { 
       id: 'edit-courses', 
@@ -199,7 +227,7 @@ const AdminDashboard = () => {
       path: '/mahi/onlineCourse'
     },
 
-    // 10
+    // 12
 
     { 
       id: 'add-admin', 
@@ -211,7 +239,7 @@ const AdminDashboard = () => {
       path: '/mahi/register'
     },
 
-    //11
+    //13
 
     { 
       id: 'edit-review', 
@@ -223,7 +251,7 @@ const AdminDashboard = () => {
       path: '/mahi/review'
     },
 
-     // 12
+     // 14
 
 
     {
@@ -237,16 +265,16 @@ const AdminDashboard = () => {
     },
 
 
-    // 13
+    //15
 
     { 
       id: 'get-help', 
       title: 'Get Help', 
       icon: <TbHelpOctagon className="text-4xl" />,
-      bgColor: 'bg-yellow-100',
+      bgColor: 'bg-blue-100',
       hoverBgColor: 'bg-blue-50',
       textColor: 'text-blue-800',
-      path: '/mahi/getHelp'
+      path: '/mahi/attendence/attendance'
     },
 
   ];

@@ -96,6 +96,7 @@ export async function GET(request) {
           status: feeStatus,
           installmentDetails: installmentDetails.map(installment => ({
             amount: installment.amount,
+            originalAmount: installment.originalAmount,
             submissionDate: installment.submissionDate,
             paid: installment.paid,
             payments: installment.payments || []
@@ -219,8 +220,10 @@ export async function PUT(request) {
           
           return {
             amount: installmentAmount,
+            originalAmount: installmentAmount,
             submissionDate,
-            paid: false
+            paid: false,
+            payments: []
           };
         });
       }

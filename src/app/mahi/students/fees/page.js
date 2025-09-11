@@ -18,6 +18,8 @@ const StudentManagementDashboard = () => {
   const [modalLoading, setModalLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [paymentInstallmentIndex, setPaymentInstallmentIndex] = useState(null);
+  const [installmentPaymentAmounts, setInstallmentPaymentAmounts] = useState({});
   
   // Date formatting function
   const formatDate = (dateStr) => {
@@ -175,10 +177,17 @@ const StudentManagementDashboard = () => {
           const updatedData = await updatedResponse.json();
           if (updatedData.success) {
             setSelectedStudent(updatedData.data);
+            // Update fee edit data to reflect new installment amounts
+            setFeeEditData({
+              totalFees: updatedData.data.feeDetails.totalFees,
+              remainingFees: updatedData.data.feeDetails.remainingFees,
+              installments: updatedData.data.feeDetails.installmentDetails?.length || 0
+            });
           }
         }
         setPaymentAmount('');
-        setSuccessMessage('Payment successful!');
+        setPaymentInstallmentIndex(null);
+        setSuccessMessage('Payment successful! Installment amounts have been updated.');
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
         setError('Payment failed');
@@ -194,13 +203,34 @@ const StudentManagementDashboard = () => {
   const handleFeeUpdate = async (studentId) => {
     try {
       setModalLoading(true);
+      
+      // Calculate installment amounts
+      const totalFees = parseFloat(feeEditData.totalFees);
+      const installmentsCount = parseInt(feeEditData.installments);
+      const installmentAmounts = [];
+      
+      if (installmentsCount > 0) {
+        const baseAmount = Math.floor(totalFees / installmentsCount);
+        const remainder = totalFees % installmentsCount;
+        
+        // Create equal installments with remainder added to the first installment
+        for (let i = 0; i < installmentsCount; i++) {
+          installmentAmounts.push(i === 0 ? baseAmount + remainder : baseAmount);
+        }
+      }
+      
       const response = await fetch(`/api/admin/student/fees/${studentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          feeDetails: feeEditData
+          feeDetails: {
+            totalFees: feeEditData.totalFees,
+            remainingFees: feeEditData.remainingFees,
+            installments: feeEditData.installments,
+            installmentAmounts: installmentAmounts
+          }
         }),
       });
       
@@ -264,12 +294,12 @@ const StudentManagementDashboard = () => {
             if (updatedData.success) {
               setSelectedStudent(updatedData.data);
             }
-                      }
-            setSuccessMessage('Photo uploaded successfully!');
-            setTimeout(() => setSuccessMessage(null), 3000);
-          } else {
-            setError('Failed to upload photo');
           }
+          setSuccessMessage('Photo uploaded successfully!');
+          setTimeout(() => setSuccessMessage(null), 3000);
+        } else {
+          setError('Failed to upload photo');
+        }
       };
       reader.readAsDataURL(file);
     } catch (err) {
@@ -277,6 +307,23 @@ const StudentManagementDashboard = () => {
     } finally {
       setModalLoading(false);
     }
+  };
+
+  // Test function to demonstrate the new payment logic
+  const testPaymentLogic = () => {
+    console.log('=== NEW PAYMENT REDISTRIBUTION LOGIC ===');
+    console.log('Example: Total fees: ₹99, split into 3 installments of ₹33 each');
+    console.log('Payment: ₹23 on first installment');
+    console.log('');
+    console.log('Expected behavior:');
+    console.log('1. First installment: ₹33 (marked as PAID with ₹23 payment)');
+    console.log('2. Remaining ₹10 from first installment moved to second installment');
+    console.log('3. Second installment becomes: ₹33 + ₹10 = ₹43');
+    console.log('4. Third installment remains: ₹33');
+    console.log('');
+    console.log('This ensures installments are marked as complete when any payment is made,');
+    console.log('and remaining amounts are automatically redistributed to subsequent installments.');
+    console.log('==========================================');
   };
 
   // Handle installment update
@@ -359,16 +406,27 @@ const StudentManagementDashboard = () => {
             <h1 className="text-3xl font-bold text-gray-800">Student Management</h1>
             <p className="text-gray-600">Manage and track student information</p>
           </div>
-          <button
-            onClick={() => fetchStudents(currentPage)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-            disabled={loading}
-          >
-            <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => fetchStudents(currentPage)}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+              disabled={loading}
+            >
+              <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button
+              onClick={testPaymentLogic}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Test Logic
+            </button>
+          </div>
         </div>
         <p className="text-sm text-gray-500 mt-2">
           Showing {filteredStudents.length} of {totalStudents} students (Page {currentPage} of {totalPages})
@@ -736,6 +794,7 @@ const StudentManagementDashboard = () => {
             onClick={() => {
               setShowModal(false);
               setEditMode(false);
+              setPaymentInstallmentIndex(null);
             }}
           >
             <motion.div
@@ -816,6 +875,7 @@ const StudentManagementDashboard = () => {
                     onClick={() => {
                       setShowModal(false);
                       setEditMode(false);
+                      setPaymentInstallmentIndex(null);
                     }}
                     className="text-gray-400 hover:text-gray-600"
                   >
@@ -865,7 +925,7 @@ const StudentManagementDashboard = () => {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Installments</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Number of Installments</label>
                           <input
                             type="number"
                             className="w-full p-2 border border-gray-300 rounded"
@@ -934,7 +994,7 @@ const StudentManagementDashboard = () => {
                           </div>
                         )}
                         
-                        {(selectedStudent.feeDetails.remainingFees || 0) > 0 && (
+                        {(selectedStudent.feeDetails.remainingFees || 0) > 0 && paymentInstallmentIndex === null && (
                           <div className="mt-4">
                             <div className="flex gap-2">
                               <input
@@ -943,11 +1003,13 @@ const StudentManagementDashboard = () => {
                                 className="flex-1 p-2 border border-gray-300 rounded"
                                 value={paymentAmount}
                                 onChange={(e) => setPaymentAmount(e.target.value)}
+                                min="1"
+                                max={selectedStudent.feeDetails.remainingFees}
                               />
                               <button
                                 onClick={() => handleFeePayment(selectedStudent._id, paymentAmount)}
                                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                disabled={modalLoading || !paymentAmount}
+                                disabled={modalLoading || !paymentAmount || paymentAmount <= 0 || paymentAmount > selectedStudent.feeDetails.remainingFees}
                               >
                                 {modalLoading ? 'Processing...' : 'Pay'}
                               </button>
@@ -999,10 +1061,23 @@ const StudentManagementDashboard = () => {
                               <p className="text-sm text-gray-600">
                                 Due: {formatDate(installment.submissionDate)}
                               </p>
+                              <p className="text-sm text-gray-600">
+                                Amount: ₹{installment.amount}
+                                {installment.originalAmount && installment.originalAmount !== installment.amount && (
+                                  <span className="text-xs text-blue-600 ml-1">
+                                    (original: ₹{installment.originalAmount})
+                                  </span>
+                                )}
+                              </p>
+                              {installment.payments && installment.payments.length > 0 && (
+                                <p className="text-sm text-green-600">
+                                  Paid: ₹{installment.payments.reduce((sum, payment) => sum + payment.amount, 0)}
+                                </p>
+                              )}
                             </div>
                             
                             <div className="text-right">
-                              <p className="font-medium">₹{installment.amount}</p>
+                              <p className="font-medium">₹{installment.amount - (installment.payments ? installment.payments.reduce((sum, payment) => sum + payment.amount, 0) : 0)} due</p>
                               <span className={`text-xs px-2 py-1 rounded-full ${
                                 installment.paid 
                                   ? 'bg-green-100 text-green-800' 
@@ -1016,26 +1091,43 @@ const StudentManagementDashboard = () => {
                           </div>
                           
                           {!installment.paid && (
-                            <div className="mt-3">
+                            <div className="mt-3 space-y-2">
                               <div className="flex gap-2">
                                 <input
                                   type="number"
-                                  placeholder="Amount"
+                                  placeholder="Custom amount"
                                   className="flex-1 p-2 border border-gray-300 rounded"
-                                  value={paymentAmount}
-                                  onChange={(e) => setPaymentAmount(e.target.value)}
+                                  value={installmentPaymentAmounts[index] ?? ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    setInstallmentPaymentAmounts(prev => ({ ...prev, [index]: value }));
+                                  }}
+                                  min="1"
+                                  max={installment.amount - (installment.payments ? installment.payments.reduce((sum, payment) => sum + payment.amount, 0) : 0)}
                                 />
                                 <button
-                                  onClick={() => handleFeePayment(selectedStudent._id, paymentAmount, index)}
+                                  onClick={() => handleFeePayment(
+                                    selectedStudent._id,
+                                    installmentPaymentAmounts[index],
+                                    index
+                                  )}
                                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                  disabled={modalLoading || !paymentAmount}
+                                  disabled={
+                                    modalLoading ||
+                                    !installmentPaymentAmounts[index] ||
+                                    installmentPaymentAmounts[index] <= 0 ||
+                                    installmentPaymentAmounts[index] > (installment.amount - (installment.payments ? installment.payments.reduce((sum, payment) => sum + payment.amount, 0) : 0))
+                                  }
                                 >
-                                  {modalLoading ? 'Processing...' : 'Pay'}
+                                  {modalLoading ? 'Processing...' : 'Pay Custom'}
                                 </button>
                               </div>
                               <button
-                                onClick={() => handleFeePayment(selectedStudent._id, installment.amount, index)}
-                                className="w-full mt-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                onClick={() => {
+                                  const due = installment.amount - (installment.payments ? installment.payments.reduce((sum, payment) => sum + payment.amount, 0) : 0);
+                                  handleFeePayment(selectedStudent._id, due, index);
+                                }}
+                                className="w-full px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                 disabled={modalLoading}
                               >
                                 {modalLoading ? 'Processing...' : 'Pay Full Installment'}
