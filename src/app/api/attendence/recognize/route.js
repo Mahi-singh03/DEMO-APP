@@ -14,13 +14,13 @@ export async function POST(req) {
 
     const encodings = await FaceEncoding.find({});
     if (!encodings || encodings.length === 0) {
-      return NextResponse.json({ success: false, message: 'No encodings available' }, { status: 404 });
+      return NextResponse.json({ success: false, detectedFace: null, message: 'No face encodings in database. Please upload at least one face.' });
     }
 
     // Create deterministic mock encoding from imageData (demo-only)
     const probe = normalizeVector(generateDeterministicEncoding(imageData, 128));
     if (!isVectorValid(probe)) {
-      return NextResponse.json({ success: false, message: 'No face detected. Please align your face in the frame.' }, { status: 422 });
+      return NextResponse.json({ success: false, detectedFace: false, message: 'No face detected. Please align your face in the frame.' }, { status: 422 });
     }
 
     // Build per-student centroid (mean embedding) and compute similarity to probe
@@ -47,33 +47,33 @@ export async function POST(req) {
     const top2 = ranked[1];
 
     // Tuned thresholds to balance FP/FN using mock embeddings
-    const BASE_SIMILARITY_THRESHOLD = 0.75;
-    const MARGIN_THRESHOLD = 0.12;   // require a clear margin over 2nd best
-    const MIN_VECTOR_NORM = 0.6;     // reject low-energy vectors (indicates noise)
+    const BASE_SIMILARITY_THRESHOLD = 0.78; // slightly relaxed to reduce false negatives
+    const MARGIN_THRESHOLD = 0.10;   // slightly relaxed margin
+    const MIN_VECTOR_NORM = 0.7;     // reject low-energy vectors (indicates noise)
 
     // Reject if probe looks like noise
     if (vectorNorm(probe) < MIN_VECTOR_NORM) {
-      return NextResponse.json({ success: false, message: 'No student detected. Please get closer and ensure good lighting.' }, { status: 422 });
+      return NextResponse.json({ success: false, detectedFace: false, message: 'No face detected. Please get closer and ensure good lighting.' }, { status: 422 });
     }
 
     if (!top1) {
-      return NextResponse.json({ success: false, message: 'No registered student detected. If you are a student, please register your face.' }, { status: 404 });
+      return NextResponse.json({ success: false, detectedFace: true, message: 'Student not recognized. If you are a student, please register your face.' });
     }
 
     // If a student has very few samples, require a slightly higher similarity
     const samplesForTop1 = studentIdToCount.get(String(top1.studentId)) || 0;
-    const requiredThreshold = samplesForTop1 >= 3 ? BASE_SIMILARITY_THRESHOLD - 0.03 : BASE_SIMILARITY_THRESHOLD + 0.03; // 0.72 or 0.78
+    const requiredThreshold = samplesForTop1 >= 3 ? BASE_SIMILARITY_THRESHOLD - 0.02 : BASE_SIMILARITY_THRESHOLD + 0.02; // small adjustment based on sample size
 
     if (top1.similarity < requiredThreshold || (top2 && (top1.similarity - top2.similarity) < MARGIN_THRESHOLD)) {
-      return NextResponse.json({ success: false, message: 'No registered student detected. If you are a student, please register your face.' }, { status: 404 });
+      return NextResponse.json({ success: false, detectedFace: true, confidence: Number(top1.similarity?.toFixed(3) || 0), message: 'Student not recognized. If you are a student, please register your face.' });
     }
 
     const student = await Student.findById(top1.studentId).select('-password');
     if (!student) {
-      return NextResponse.json({ success: false, message: 'Student not found for encoding' }, { status: 404 });
+      return NextResponse.json({ success: false, message: 'Student not found for encoding' });
     }
 
-    return NextResponse.json({ success: true, student, similarity: top1.similarity });
+    return NextResponse.json({ success: true, detectedFace: true, student, confidence: Number(top1.similarity.toFixed(3)) });
   } catch (error) {
     return NextResponse.json({ success: false, message: 'Recognition failed', error: error.message }, { status: 500 });
   }

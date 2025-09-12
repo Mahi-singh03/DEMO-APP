@@ -96,7 +96,11 @@ export default function Attendance() {
           stopCamera();
           setMessage(`Recognized: ${data.student.fullName} (${data.student.rollNo})`);
         } else if (!data.success) {
-          setMessage(data.message || 'Face not recognized. Ensure good lighting and face is centered.');
+          if (data.detectedFace === false) {
+            setMessage(data.message || 'No face detected. Ensure good lighting and face is centered.');
+          } else {
+            setMessage('Student not recognized. If you are a student, please register your face.');
+          }
         }
       } catch (error) {
         console.error('Recognition error:', error);
@@ -115,8 +119,7 @@ export default function Attendance() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          studentId: recognizedStudent._id,
-          rollNo: recognizedStudent.rollNo
+          studentId: recognizedStudent._id
         }),
       });
 
